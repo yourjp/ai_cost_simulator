@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.git
+ai-cost-calculator.zip
+Dockerfile
+.dockerignore
+.github
+README.md
+walkthrough.md
+AGENTS.md
+CLAUDE.md
