@@ -786,22 +786,8 @@ export default function CalculatorDashboard() {
                   </div>
                 </div>
 
-                {/* OpenAI High-tier model Select Box */}
-                <div className="mb-2.5 flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800/40 px-2 py-1.5 rounded-lg text-xs">
-                  <label htmlFor="openai-high-model" className="text-slate-400 font-semibold text-[10px] uppercase">최상위 모델 선택</label>
-                  <select
-                    id="openai-high-model"
-                    value={selectedOpenAIHighModelName}
-                    onChange={(e) => setSelectedOpenAIHighModelName(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-[11px]"
-                  >
-                    <option value="GPT-5.6 Sol">GPT-5.6 Sol ($5.00/$30.00)</option>
-                    <option value="GPT-5.6 Terra">GPT-5.6 Terra ($2.00/$12.00)</option>
-                  </select>
-                </div>
-
-                <div className="text-[10px] text-slate-500 mb-3">
-                  {selectedOpenAIHighModelName} vs {getModelNameByTier('OpenAI', 'mid')}
+                <div className="text-[10px] text-slate-500 mb-3 font-semibold font-mono">
+                  {selectedOpenAIHighModelName} (최상위) vs {getModelNameByTier('OpenAI', 'mid')} (가성비)
                 </div>
                 <input
                   type="range"
@@ -823,24 +809,8 @@ export default function CalculatorDashboard() {
                   </div>
                 </div>
 
-                {/* Anthropic High-tier model Select Box */}
-                <div className="mb-2.5 flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800/40 px-2 py-1.5 rounded-lg text-xs">
-                  <label htmlFor="claude-high-model" className="text-slate-400 font-semibold text-[10px] uppercase">최상위 모델 선택</label>
-                  <select
-                    id="claude-high-model"
-                    value={selectedAnthropicHighModelName}
-                    onChange={(e) => setSelectedAnthropicHighModelName(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-[11px]"
-                  >
-                    <option value="Claude 3 Opus">Claude 3 Opus ($15.00/$75.00)</option>
-                    <option value="Claude Opus 4.6">Claude Opus 4.6 ($5.00/$25.00)</option>
-                    <option value="Claude Fable 5">Claude Fable 5 ($10.00/$50.00)</option>
-                    <option value="Claude Sonnet 4.6">Claude Sonnet 4.6 ($3.00/$15.00)</option>
-                  </select>
-                </div>
-
-                <div className="text-[10px] text-slate-500 mb-3">
-                  {selectedAnthropicHighModelName} vs {getModelNameByTier('Anthropic', 'mid')}
+                <div className="text-[10px] text-slate-500 mb-3 font-semibold font-mono">
+                  {selectedAnthropicHighModelName} (최상위) vs {getModelNameByTier('Anthropic', 'mid')} (가성비)
                 </div>
                 <input
                   type="range"
@@ -861,8 +831,8 @@ export default function CalculatorDashboard() {
                     <span>가성비: {mixRatios.Google.mid}%</span>
                   </div>
                 </div>
-                <div className="text-[10px] text-slate-500 mb-3">
-                  {getModelNameByTier('Google', 'high')} vs {getModelNameByTier('Google', 'mid')}
+                <div className="text-[10px] text-slate-500 mb-3 font-semibold font-mono">
+                  {getModelNameByTier('Google', 'high')} (최상위) vs {getModelNameByTier('Google', 'mid')} (가성비)
                 </div>
                 <input
                   type="range"
