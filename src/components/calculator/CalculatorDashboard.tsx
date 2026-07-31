@@ -348,6 +348,35 @@ export default function CalculatorDashboard() {
   const flagshipHistoryData = trendData.high.length ? trendData.high : fallbackFlagshipHistoryData;
   const budgetHistoryData = trendData.mid.length ? trendData.mid : fallbackBudgetHistoryData;
 
+  const applySelectedModelPricesToLatestTrend = (tier: ModelTier, data: TrendPoint[]) => {
+    if (!data.length) return data;
+
+    return data.map((point, index) => {
+      if (index !== data.length - 1) return point;
+
+      return {
+        ...point,
+        OpenAI: filteredPricingData.find(model => model.provider === 'OpenAI' && model.tier === tier)?.inputCostPer1M ?? point.OpenAI,
+        Anthropic: filteredPricingData.find(model => model.provider === 'Anthropic' && model.tier === tier)?.inputCostPer1M ?? point.Anthropic,
+        Google: filteredPricingData.find(model => model.provider === 'Google' && model.tier === tier)?.inputCostPer1M ?? point.Google,
+      };
+    });
+  };
+
+  const selectedFlagshipHistoryData = applySelectedModelPricesToLatestTrend('high', flagshipHistoryData);
+  const selectedBudgetHistoryData = applySelectedModelPricesToLatestTrend('mid', budgetHistoryData);
+
+  const getTrendYAxisMax = (data: TrendPoint[]) => {
+    const maxPrice = data.reduce((max, point) => {
+      return Math.max(max, point.OpenAI, point.Anthropic, point.Google);
+    }, 0);
+
+    return Math.max(1, Math.ceil(maxPrice * 1.1 * 100) / 100);
+  };
+
+  const flagshipYAxisMax = getTrendYAxisMax(selectedFlagshipHistoryData);
+  const budgetYAxisMax = getTrendYAxisMax(selectedBudgetHistoryData);
+
   // Dynamic user token usages state
   const [tokenUsage, setTokenUsage] = useState<Record<UserType, UserTokenUsage>>(DEFAULT_TOKEN_USAGE);
 
@@ -561,6 +590,44 @@ export default function CalculatorDashboard() {
     const model = filteredPricingData.find(m => m.provider === provider && m.tier === tier);
     return model ? model.modelName : tier === 'high' ? '최상위' : '가성비';
   };
+
+  const getLatestTrendPrice = (provider: ProviderName, data: TrendPoint[]) => {
+    const latestPoint = data[data.length - 1];
+    return latestPoint ? latestPoint[provider] : Number.POSITIVE_INFINITY;
+  };
+
+  const getSelectedModelPrice = (provider: ProviderName, tier: ModelTier) => {
+    const model = filteredPricingData.find(item => item.provider === provider && item.tier === tier);
+    return model?.inputCostPer1M ?? Number.POSITIVE_INFINITY;
+  };
+
+  const getSortedTrendLines = (tier: ModelTier, data: TrendPoint[]) =>
+    providers
+      .map(provider => ({
+        provider,
+        modelName: getModelNameByTier(provider, tier),
+        latestPrice: getSelectedModelPrice(provider, tier),
+        trendPrice: getLatestTrendPrice(provider, data),
+        color: getProviderColor(provider),
+      }))
+      .sort((a, b) => a.latestPrice - b.latestPrice);
+
+  const highTrendLines = getSortedTrendLines('high', selectedFlagshipHistoryData);
+  const midTrendLines = getSortedTrendLines('mid', selectedBudgetHistoryData);
+
+  const renderPriceSortedLegend = (
+    lines: Array<{ provider: ProviderName; modelName: string; latestPrice: number; color: string }>
+  ) => (
+    <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 pt-2 text-[10px]">
+      {lines.map(line => (
+        <div key={line.provider} className="flex items-center gap-1.5 font-mono text-slate-300">
+          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: line.color }} />
+          <span>{line.modelName}</span>
+          <span className="text-slate-500">${line.latestPrice.toFixed(2)}</span>
+        </div>
+      ))}
+    </div>
+  );
 
   // Prepare chart dataset sorted explicitly: Google -> OpenAI -> Anthropic
   const providerOrder: Record<string, number> = { Google: 0, OpenAI: 1, Anthropic: 2 };
@@ -1624,14 +1691,14 @@ export default function CalculatorDashboard() {
               </span>
             </div>
             <p className="text-slate-400 text-[11px] mb-4">
-              과거 1개월 전(07/03)부터 현재(07/31)까지의 주요 3사 최상위 플래그십 단가 변동 흐름
+              최근 6개월 동안 15일 단위로 기록한 주요 3사 최상위 플래그십 단가 변동 흐름
             </p>
           </div>
           
           <div className="h-64 w-full bg-slate-950/20 border border-slate-800/40 rounded-xl p-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={flagshipHistoryData}
+                data={selectedFlagshipHistoryData}
                 margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.4} />
@@ -1645,7 +1712,7 @@ export default function CalculatorDashboard() {
                   stroke="#64748b" 
                   fontSize={10}
                   tickFormatter={(value) => `$${value}`}
-                  domain={[0, 16]}
+                  domain={[0, flagshipYAxisMax]}
                   tickLine={false}
                 />
                 <Tooltip 
@@ -1659,38 +1726,19 @@ export default function CalculatorDashboard() {
                   }}
                   formatter={(value: ChartValue) => formatDollarTooltip(value, 2)}
                 />
-                <Legend 
-                  wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
-                  verticalAlign="bottom"
-                  align="center"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="OpenAI" 
-                  name={getModelNameByTier('OpenAI', 'high')}
-                  stroke="#10b981" 
-                  strokeWidth={2.5}
-                  dot={{ r: 3, strokeWidth: 1.5 }}
-                  activeDot={{ r: 5 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="Anthropic" 
-                  name={getModelNameByTier('Anthropic', 'high')}
-                  stroke="#f59e0b" 
-                  strokeWidth={2.5}
-                  dot={{ r: 3, strokeWidth: 1.5 }}
-                  activeDot={{ r: 5 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="Google" 
-                  name="Gemini 1.5 Pro"
-                  stroke="#3b82f6" 
-                  strokeWidth={2.5}
-                  dot={{ r: 3, strokeWidth: 1.5 }}
-                  activeDot={{ r: 5 }}
-                />
+                <Legend content={() => renderPriceSortedLegend(highTrendLines)} />
+                {highTrendLines.map(line => (
+                  <Line
+                    key={`high-${line.provider}`}
+                    type="monotone"
+                    dataKey={line.provider}
+                    name={`${line.modelName} ($${line.latestPrice.toFixed(2)})`}
+                    stroke={line.color}
+                    strokeWidth={2.5}
+                    dot={{ r: 3, strokeWidth: 1.5 }}
+                    activeDot={{ r: 5 }}
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1709,14 +1757,14 @@ export default function CalculatorDashboard() {
               </span>
             </div>
             <p className="text-slate-400 text-[11px] mb-4">
-              과거 1개월 전(07/03)부터 현재(07/31)까지의 주요 3사 가성비 엔트리 단가 변동 흐름
+              최근 6개월 동안 15일 단위로 기록한 주요 3사 가성비 엔트리 단가 변동 흐름
             </p>
           </div>
 
           <div className="h-64 w-full bg-slate-950/20 border border-slate-800/40 rounded-xl p-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={budgetHistoryData}
+                data={selectedBudgetHistoryData}
                 margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.4} />
@@ -1730,7 +1778,7 @@ export default function CalculatorDashboard() {
                   stroke="#64748b" 
                   fontSize={10}
                   tickFormatter={(value) => `$${value}`}
-                  domain={[0, 4]}
+                  domain={[0, budgetYAxisMax]}
                   tickLine={false}
                 />
                 <Tooltip 
@@ -1744,38 +1792,19 @@ export default function CalculatorDashboard() {
                   }}
                   formatter={(value: ChartValue) => formatDollarTooltip(value, 3)}
                 />
-                <Legend 
-                  wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
-                  verticalAlign="bottom"
-                  align="center"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="OpenAI" 
-                  name="GPT-5.6 Luna"
-                  stroke="#10b981" 
-                  strokeWidth={2.5}
-                  dot={{ r: 3, strokeWidth: 1.5 }}
-                  activeDot={{ r: 5 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="Anthropic" 
-                  name="Claude Haiku 4.5"
-                  stroke="#f59e0b" 
-                  strokeWidth={2.5}
-                  dot={{ r: 3, strokeWidth: 1.5 }}
-                  activeDot={{ r: 5 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="Google" 
-                  name="Gemini 1.5 Flash"
-                  stroke="#3b82f6" 
-                  strokeWidth={2.5}
-                  dot={{ r: 3, strokeWidth: 1.5 }}
-                  activeDot={{ r: 5 }}
-                />
+                <Legend content={() => renderPriceSortedLegend(midTrendLines)} />
+                {midTrendLines.map(line => (
+                  <Line
+                    key={`mid-${line.provider}`}
+                    type="monotone"
+                    dataKey={line.provider}
+                    name={`${line.modelName} ($${line.latestPrice.toFixed(2)})`}
+                    stroke={line.color}
+                    strokeWidth={2.5}
+                    dot={{ r: 3, strokeWidth: 1.5 }}
+                    activeDot={{ r: 5 }}
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1787,11 +1816,11 @@ export default function CalculatorDashboard() {
       <section className="max-w-7xl mx-auto mt-8 bg-slate-900/30 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl overflow-hidden">
         <h2 className="text-lg font-bold text-slate-200 mb-5 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-indigo-400" />
-          <span>글로벌 AI 모델 단가 변동 히스토리 & 가격 추세</span>
+          <span>신규모델출시, 단가 변동 추세</span>
         </h2>
         
         <p className="text-slate-400 text-xs mb-6 leading-relaxed">
-          주요 빅테크 3사의 지속적인 토큰 단가 인하 경쟁 추이와 역사적 요금 인하 마일스톤 정보입니다. (100만 토큰 기준 / 달러 가격 변동 추이)
+          주요 AI 공급사의 신규 모델 출시, 일반 제공 전환, 가격 인하/인상 정보를 입수해 공급사별 최신순으로 보여줍니다. (최근 6개월 / 100만 토큰 기준)
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">

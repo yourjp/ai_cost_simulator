@@ -74,6 +74,13 @@
       "outputCostPer1M": 9
     },
     {
+      "modelName": "gemini-3.1-pro",
+      "provider": "Google",
+      "tier": "high",
+      "inputCostPer1M": 2,
+      "outputCostPer1M": 12
+    },
+    {
       "modelName": "gemini-3.5-flash-lite",
       "provider": "Google",
       "tier": "mid",
@@ -149,6 +156,12 @@
       "valsIndex": "62.75%",
       "features": "에이전트, 코딩, 검색 및 grounding 중심 작업에 적합한 고효율 Flash 모델"
     },
+    "gemini-3.1-pro": {
+      "context": "2M",
+      "maxOutput": "64k",
+      "valsIndex": "없음",
+      "features": "최신 Pro 계열이 가격표에 없을 때 비교 기준으로 유지하는 이전 세대 Google Pro 모델"
+    },
     "gemini-3.5-flash-lite": {
       "context": "-",
       "maxOutput": "-",
@@ -208,8 +221,22 @@
   "trendData": {
     "high": [
       {
+        "date": "2026-02-15",
+        "week": "02/15",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
         "date": "2026-02-28",
         "week": "02/28",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-03-15",
+        "week": "03/15",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
@@ -222,8 +249,22 @@
         "Google": 1.5
       },
       {
+        "date": "2026-04-15",
+        "week": "04/15",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
         "date": "2026-04-30",
         "week": "04/30",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-05-15",
+        "week": "05/15",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
@@ -236,8 +277,22 @@
         "Google": 1.5
       },
       {
+        "date": "2026-06-15",
+        "week": "06/15",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
         "date": "2026-06-30",
         "week": "06/30",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-07-15",
+        "week": "07/15",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
@@ -252,8 +307,22 @@
     ],
     "mid": [
       {
+        "date": "2026-02-15",
+        "week": "02/15",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
         "date": "2026-02-28",
         "week": "02/28",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-03-15",
+        "week": "03/15",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
@@ -266,8 +335,22 @@
         "Google": 0.3
       },
       {
+        "date": "2026-04-15",
+        "week": "04/15",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
         "date": "2026-04-30",
         "week": "04/30",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-05-15",
+        "week": "05/15",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
@@ -280,8 +363,22 @@
         "Google": 0.3
       },
       {
+        "date": "2026-06-15",
+        "week": "06/15",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
         "date": "2026-06-30",
         "week": "06/30",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-07-15",
+        "week": "07/15",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
