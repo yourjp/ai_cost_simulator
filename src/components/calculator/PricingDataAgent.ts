@@ -37,18 +37,32 @@ export const FALLBACK_PRICING: ModelPricing[] = [
     outputCostPer1M: 75.00
   },
   {
-    modelName: 'Claude 3.5 Sonnet',
+    modelName: 'Claude Opus 4.6',
+    provider: 'Anthropic',
+    tier: 'high',
+    inputCostPer1M: 5.00,
+    outputCostPer1M: 25.00
+  },
+  {
+    modelName: 'Claude Fable 5',
+    provider: 'Anthropic',
+    tier: 'high',
+    inputCostPer1M: 10.00,
+    outputCostPer1M: 50.00
+  },
+  {
+    modelName: 'Claude Sonnet 4.6',
     provider: 'Anthropic',
     tier: 'high',
     inputCostPer1M: 3.00,
     outputCostPer1M: 15.00
   },
   {
-    modelName: 'Claude 3 Haiku',
+    modelName: 'Claude Haiku 4.5',
     provider: 'Anthropic',
     tier: 'mid',
-    inputCostPer1M: 0.25,
-    outputCostPer1M: 1.25
+    inputCostPer1M: 1.00,
+    outputCostPer1M: 5.00
   },
   {
     modelName: 'Gemini 1.5 Pro',

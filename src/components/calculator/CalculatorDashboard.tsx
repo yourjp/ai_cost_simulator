@@ -70,25 +70,25 @@ export default function CalculatorDashboard() {
     { 
       week: '07/03', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
       Google: 7.00 
     },
     { 
       week: '07/10', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
       Google: 7.00 
     },
     { 
       week: '07/17', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
       Google: 1.25 
     }, // Google 1.5 Pro 가격 인하 시점
     { 
       week: '07/24', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
       Google: 1.25 
     },
     { 
@@ -101,14 +101,14 @@ export default function CalculatorDashboard() {
 
   // 1주일 단위 3사 가성비 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
   const budgetHistoryData = [
-    { week: '07/03', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
-    { week: '07/10', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
-    { week: '07/17', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
-    { week: '07/24', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
+    { week: '07/03', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
+    { week: '07/10', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
+    { week: '07/17', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
+    { week: '07/24', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
     { 
       week: '07/31(현재)', 
       OpenAI: filteredPricingData.find(m => m.provider === 'OpenAI' && m.tier === 'mid')?.inputCostPer1M ?? 0.20, 
-      Anthropic: filteredPricingData.find(m => m.provider === 'Anthropic' && m.tier === 'mid')?.inputCostPer1M ?? 0.25, 
+      Anthropic: filteredPricingData.find(m => m.provider === 'Anthropic' && m.tier === 'mid')?.inputCostPer1M ?? 1.00, 
       Google: 0.075 
     }
   ];
@@ -140,25 +140,25 @@ export default function CalculatorDashboard() {
     ],
     Anthropic: [
       {
-        date: '2025-08-01',
+        date: '2026-02-17',
         isRecent: true,
-        title: '프롬프트 캐싱 (Prompt Caching) 기능 공식 출시',
-        price: 'hit 시 입력 단가 90% 할인 (hit $0.20 / $0.30)',
-        desc: '중복 지시문 재입력 시 입력 비용 최대 90% 상시 할인'
-      },
-      {
-        date: '2024-10-22',
-        isRecent: false,
-        title: 'Claude 3.5 Sonnet 공식 출시',
+        title: 'Claude Sonnet 4.6 공식 출시',
         price: '$3.00 / $15.00',
-        desc: '추론 효율 극대화 및 토큰 단가 대비 가성비 효율성 극대화'
+        desc: '속도와 성능의 완벽한 균형, 대부분의 일상 작업에 적합 (1M 컨텍스트, 64K 출력)'
       },
       {
-        date: '2024-03-04',
+        date: '2026-02-05',
+        isRecent: true,
+        title: '최상위 Claude Opus 4.6 공식 출시',
+        price: '$5.00 / $25.00',
+        desc: '가장 뛰어난 추론·코딩 성능 및 Fast Mode 지원 (1M 컨텍스트, 128K 출력)'
+      },
+      {
+        date: '2025-10-15',
         isRecent: false,
-        title: '최상위 Claude 3 Opus & Haiku 공식 출시',
-        price: 'Opus $15.00, Haiku $0.25',
-        desc: 'Anthropic 플래그십 핵심 엔진 및 초저가 경량형 가성비 에이전트 동시 론칭'
+        title: 'Claude Haiku 4.5 공식 출시',
+        price: '$1.00 / $5.00',
+        desc: '가장 빠르고 가벼움, 간단한 대규모 태스크에 최적화 (200K 컨텍스트)'
       }
     ],
     Google: [
@@ -833,7 +833,9 @@ export default function CalculatorDashboard() {
                     className="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-[11px]"
                   >
                     <option value="Claude 3 Opus">Claude 3 Opus ($15.00/$75.00)</option>
-                    <option value="Claude 3.5 Sonnet">Claude 3.5 Sonnet ($3.00/$15.00)</option>
+                    <option value="Claude Opus 4.6">Claude Opus 4.6 ($5.00/$25.00)</option>
+                    <option value="Claude Fable 5">Claude Fable 5 ($10.00/$50.00)</option>
+                    <option value="Claude Sonnet 4.6">Claude Sonnet 4.6 ($3.00/$15.00)</option>
                   </select>
                 </div>
 
@@ -1471,7 +1473,7 @@ export default function CalculatorDashboard() {
                 <Line 
                   type="monotone" 
                   dataKey="Anthropic" 
-                  name="Claude 3 Haiku"
+                  name="Claude Haiku 4.5"
                   stroke="#f59e0b" 
                   strokeWidth={2.5}
                   dot={{ r: 3, strokeWidth: 1.5 }}
