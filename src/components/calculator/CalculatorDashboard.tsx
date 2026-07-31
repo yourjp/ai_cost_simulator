@@ -1,37 +1,111 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UIStateAgent, UserRatioState, UserType, ProviderMixState, ModelMixRatio } from './UIStateAgent';
+import { UIStateAgent, UserRatioState, UserType, ProviderMixState } from './UIStateAgent';
 import { PricingDataAgent, ModelPricing, FALLBACK_PRICING } from './PricingDataAgent';
 import { SimulationEngineAgent, DEFAULT_TOKEN_USAGE, UserTokenUsage } from './SimulationEngineAgent';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { Users, DollarSign, RefreshCw, Layers, Award, Sparkles, TrendingUp, TrendingDown, Info, GitCompare } from 'lucide-react';
+import dynamicData from './dynamicData.json';
+
+const MODEL_PERFORMANCE_DB: Record<string, { context: string; maxOutput: string; mmlu: string; features: string }> = 
+  (dynamicData.performanceData as Record<string, { context: string; maxOutput: string; mmlu: string; features: string }>) || {
+    'GPT-5.6 Sol': { context: '2M', maxOutput: '16k', mmlu: '91.2%', features: '최상의 지능·추론, 전문 코딩, 멀티스텝 에이전트 특화' },
+    'GPT-5.6 Terra': { context: '1M', maxOutput: '8k', mmlu: '84.8%', features: '가성비와 지능의 균형, 비즈니스 자동화, 프롭 임베딩 최적화' },
+    'GPT-5.6 Luna': { context: '1M', maxOutput: '8k', mmlu: '78.5%', features: '초경량 고속 연산, 대용량 트래픽 응답, 80% 요금 인하 수혜' },
+    'Claude Opus 4.6': { context: '1M', maxOutput: '128k', mmlu: '92.5%', features: '독보적 코딩·추론 지능, Fast Mode 지원(속도 2.5배, 가격 6배)' },
+    'Claude Fable 5': { context: '1M', maxOutput: '64k', mmlu: '90.0%', features: '고난도 언어적 문제 해결 및 다중 추론, 차세대 지능 엔진' },
+    'Claude Sonnet 4.6': { context: '1M', maxOutput: '64k', mmlu: '88.7%', features: '속도와 성능의 조화, 프로페셔널 코드 리팩토링 특화' },
+    'Claude Haiku 4.5': { context: '0.2M', maxOutput: '4k', mmlu: '79.2%', features: '최경량 고속 서빙, 프롬프트 캐싱 hit 시 비용 90% 상시 할인' },
+    'Gemini 1.5 Pro': { context: '2M', maxOutput: '8k', mmlu: '85.9%', features: '200만 토큰 압도적 콘텍스트 창, 비디오·오디오 직접 네이티브 분석' },
+    'Gemini 1.5 Flash': { context: '1M', maxOutput: '8k', mmlu: '78.9%', features: '1M 콘텍스트 가성비 최고봉, 대형 오디오 다이렉트 처리 최적화' }
+  };
+
+const getMmluVal = (modelName: string, db: Record<string, { mmlu: string }>) => {
+  const spec = db[modelName];
+  if (!spec) return 0;
+  return parseFloat(spec.mmlu.replace('%', ''));
+};
+
+type ProviderName = 'OpenAI' | 'Anthropic' | 'Google';
+type NewsEvent = { date: string; headline: string; content: string };
+type NewsEventsByProvider = Record<ProviderName, NewsEvent[]>;
+type Metadata = { dataUpdatedAt?: string };
+type ChartValue = unknown;
+type TrendPoint = { date?: string; week: string; OpenAI: number; Anthropic: number; Google: number };
+type CostChartDatum = {
+  name: string;
+  cost: number;
+  usdCost: number;
+  krwCost: number;
+  provider: string;
+  tierLabel: string;
+};
+
+const PROVIDER_NEWS_EVENTS: NewsEventsByProvider = (dynamicData.newsData as NewsEventsByProvider) || {
+  OpenAI: [],
+  Anthropic: [],
+  Google: []
+};
+
+const TREND_DATA = (dynamicData.trendData as { high?: TrendPoint[]; mid?: TrendPoint[] }) || {};
+const DATA_METADATA = (dynamicData.metadata as Metadata) || {};
+const APP_UPDATED_AT = '2026.07.31';
+
+const isProviderName = (provider: string): provider is ProviderName => {
+  return provider === 'OpenAI' || provider === 'Anthropic' || provider === 'Google';
+};
+
+function CostTooltip({
+  active,
+  payload,
+  chartMode,
+  formatNumber
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: CostChartDatum }>;
+  chartMode: 'individual' | 'blended';
+  formatNumber: (num: number, maxDecimals?: number) => string;
+}) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-2xl backdrop-blur-xl">
+        <p className="font-bold text-white text-base mb-1">{data.name}</p>
+        <p className="text-slate-400 text-xs mb-2">
+          {chartMode === 'individual' ? `제공사: ${data.provider} | ${data.tierLabel} 모델` : data.tierLabel}
+        </p>
+        <div className="border-t border-slate-800 pt-2 flex flex-col gap-1 text-sm">
+          <div className="flex justify-between gap-6">
+            <span className="text-slate-400">USD 비용:</span>
+            <span className="font-bold text-white">${formatNumber(data.usdCost, 2)}</span>
+          </div>
+          <div className="flex justify-between gap-6">
+            <span className="text-indigo-400 font-medium">KRW 비용:</span>
+            <span className="font-bold text-indigo-300">₩{formatNumber(data.krwCost, 0)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
 
 export default function CalculatorDashboard() {
-  const [mounted, setMounted] = useState(false);
-
-
-
   const [totalUsers, setTotalUsers] = useState<number>(1000);
   const [exchangeRate, setExchangeRate] = useState<number>(1500);
   const [currencyMode, setCurrencyMode] = useState<'USD' | 'KRW'>('USD');
   const [chartMode, setChartMode] = useState<'individual' | 'blended'>('blended');
 
-  // ratios & history states for UI-State-Agent (user cohorts)
+  // User cohort ratio state.
   const [ratios, setRatios] = useState<UserRatioState>({
     light: 60,
     heavy: 20,
     stdDev: 15,
     heavyDev: 5,
   });
-  const [history, setHistory] = useState<UserType[]>(['light', 'heavy', 'stdDev', 'heavyDev']);
 
-  // Developer ratio state (sum of stdDev and heavyDev) and automatic synchronizer
   const [developerRatio, setDeveloperRatio] = useState<number>(20);
-  
-  useEffect(() => {
-    setDeveloperRatio(ratios.stdDev + ratios.heavyDev);
-  }, [ratios.stdDev, ratios.heavyDev]);
 
   // Model mix ratios state for 3 providers (High-tier vs Mid-tier blend)
   const [mixRatios, setMixRatios] = useState<ProviderMixState>({
@@ -45,14 +119,165 @@ export default function CalculatorDashboard() {
 
   // pricing state for Pricing-Data-Agent
   const [pricingData, setPricingData] = useState<ModelPricing[]>(FALLBACK_PRICING);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [dataUpdatedAt, setDataUpdatedAt] = useState(DATA_METADATA.dataUpdatedAt || '확인 필요');
+
+  // Dynamic performance and news events database states mapped from data.md
+  const [performanceDb, setPerformanceDb] = useState<Record<string, { context: string; maxOutput: string; mmlu: string; features: string }>>(MODEL_PERFORMANCE_DB);
+  const [newsEvents, setNewsEvents] = useState(PROVIDER_NEWS_EVENTS);
+  const [trendData, setTrendData] = useState<{ high: TrendPoint[]; mid: TrendPoint[] }>({
+    high: TREND_DATA.high || [],
+    mid: TREND_DATA.mid || [],
+  });
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const parseMarkdownData = (content: string) => {
+    const lines = content.split(/\r?\n/);
+    const parsedMetadata: Metadata = {};
+    const parsedPricing: ModelPricing[] = [];
+    const parsedPerformance: Record<string, { context: string; maxOutput: string; mmlu: string; features: string }> = {};
+    const parsedNews: NewsEventsByProvider = {
+      OpenAI: [],
+      Anthropic: [],
+      Google: []
+    };
+    const parsedTrend: { high: TrendPoint[]; mid: TrendPoint[] } = {
+      high: [],
+      mid: []
+    };
+
+    let currentSection = '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      if (trimmed.startsWith('데이터 업데이트:') || trimmed.startsWith('데이터 업데이트 일시:')) {
+        parsedMetadata.dataUpdatedAt = trimmed.replace(/^데이터 업데이트(?: 일시)?:/, '').trim();
+        continue;
+      }
+
+      if (trimmed.startsWith('###')) {
+        if (trimmed.includes('요금')) {
+          currentSection = 'pricing';
+        } else if (trimmed.includes('성능') || trimmed.includes('스펙')) {
+          currentSection = 'performance';
+        } else if (trimmed.includes('뉴스') || trimmed.includes('타임라인')) {
+          currentSection = 'news';
+        } else if (trimmed.includes('가격 추이') || trimmed.includes('가격 추세')) {
+          currentSection = 'trend';
+        }
+        continue;
+      }
+
+      if (trimmed.startsWith('|')) {
+        const parts = trimmed.split('|').map(p => p.trim()).filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+        if (parts.length === 0) continue;
+        if (parts[0] === '' || parts[0].includes('제공사') || parts[0].includes('모델명') || parts[0].includes('등급') || parts[0].startsWith(':') || parts[0].startsWith('-')) {
+          continue;
+        }
+
+        if (currentSection === 'pricing' && parts.length >= 5) {
+          const provider = parts[0] as 'OpenAI' | 'Anthropic' | 'Google';
+          const modelName = parts[1];
+          const tier = parts[2] as 'high' | 'mid';
+          const inputCost = parseFloat(parts[3].replace(/[$,\s]/g, ''));
+          const outputCost = parseFloat(parts[4].replace(/[$,\s]/g, ''));
+          if (modelName && !isNaN(inputCost) && !isNaN(outputCost)) {
+            parsedPricing.push({ modelName, provider, tier, inputCostPer1M: inputCost, outputCostPer1M: outputCost });
+          }
+        } else if (currentSection === 'performance' && parts.length >= 5) {
+          const modelName = parts[0];
+          const context = parts[1];
+          const maxOutput = parts[2];
+          const mmlu = parts[3];
+          const features = parts[4];
+          if (modelName) {
+            parsedPerformance[modelName] = { context, maxOutput, mmlu, features };
+          }
+        } else if (currentSection === 'news' && parts.length >= 4) {
+          const provider = parts[0];
+          const date = parts[1];
+          const headline = parts[2];
+          const detail = parts[3];
+          if (isProviderName(provider)) {
+            parsedNews[provider].push({ date, headline, content: detail });
+          }
+        } else if (currentSection === 'trend' && parts.length >= 5) {
+          const tier = parts[0];
+          const date = parts[1];
+          const openai = parseFloat(parts[2].replace(/[$,\s]/g, ''));
+          const anthropic = parseFloat(parts[3].replace(/[$,\s]/g, ''));
+          const google = parseFloat(parts[4].replace(/[$,\s]/g, ''));
+
+          if ((tier === 'high' || tier === 'mid') && date && !isNaN(openai) && !isNaN(anthropic) && !isNaN(google)) {
+            parsedTrend[tier].push({
+              date,
+              week: date.slice(5).replace('-', '/'),
+              OpenAI: openai,
+              Anthropic: anthropic,
+              Google: google
+            });
+          }
+        }
+      }
+    }
+
+    return { parsedMetadata, parsedPricing, parsedPerformance, parsedNews, parsedTrend };
+  };
+
+  const handleMarkdownUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      try {
+        const { parsedMetadata, parsedPricing, parsedPerformance, parsedNews, parsedTrend } = parseMarkdownData(text);
+        
+        let updated = false;
+        if (parsedMetadata.dataUpdatedAt) {
+          setDataUpdatedAt(parsedMetadata.dataUpdatedAt);
+          updated = true;
+        }
+        if (parsedPricing.length > 0) {
+          setPricingData(parsedPricing);
+          updated = true;
+        }
+        if (Object.keys(parsedPerformance).length > 0) {
+          setPerformanceDb(parsedPerformance);
+          updated = true;
+        }
+        if (parsedNews.OpenAI.length > 0 || parsedNews.Anthropic.length > 0 || parsedNews.Google.length > 0) {
+          setNewsEvents(parsedNews);
+          updated = true;
+        }
+        if (parsedTrend.high.length > 0 || parsedTrend.mid.length > 0) {
+          setTrendData(parsedTrend);
+          updated = true;
+        }
+
+        if (updated) {
+          alert('🎉 데이터 갱신 완료!\n\n업로드된 마크다운 파일(.md)을 런타임 분석하여 모델 요금제, 성능 스펙 리더보드, 하단 뉴스 타임라인이 실시간으로 자동 갱신되었습니다.');
+        } else {
+          alert('⚠️ 경고: 유효한 데이터가 파싱되지 않았습니다. DATA_SPEC.md 포맷을 참고해 주세요.');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('❌ 데이터 갱신 실패: 파일 구조가 올바른 마크다운 표 형태가 아닙니다.');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   // OpenAI selected high-tier model choice ('GPT-5.6 Sol' vs 'GPT-5.6 Terra')
   const [selectedOpenAIHighModelName, setSelectedOpenAIHighModelName] = useState<string>('GPT-5.6 Sol');
 
-  // Anthropic selected high-tier model choice ('Claude 3 Opus' vs 'Claude 3.5 Sonnet')
-  const [selectedAnthropicHighModelName, setSelectedAnthropicHighModelName] = useState<string>('Claude 3 Opus');
+  // Anthropic selected high-tier model choice ('Claude Opus 4.6' vs other choices)
+  const [selectedAnthropicHighModelName, setSelectedAnthropicHighModelName] = useState<string>('Claude Opus 4.6');
 
   // Filter pricingData to only include the active models
   const filteredPricingData = pricingData.filter(model => {
@@ -66,41 +291,41 @@ export default function CalculatorDashboard() {
   });
 
   // 1주일 단위 3사 최상위 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
-  const flagshipHistoryData = [
+  const fallbackFlagshipHistoryData = [
     { 
       week: '07/03', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
       Google: 7.00 
     },
     { 
       week: '07/10', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
       Google: 7.00 
     },
     { 
       week: '07/17', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
       Google: 1.25 
     }, // Google 1.5 Pro 가격 인하 시점
     { 
       week: '07/24', 
       OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : (selectedAnthropicHighModelName === 'Claude Sonnet 4.6' ? 3.00 : 15.00)), 
+      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
       Google: 1.25 
     },
     { 
       week: '07/31(현재)', 
       OpenAI: filteredPricingData.find(m => m.provider === 'OpenAI' && m.tier === 'high')?.inputCostPer1M ?? 5.00, 
-      Anthropic: filteredPricingData.find(m => m.provider === 'Anthropic' && m.tier === 'high')?.inputCostPer1M ?? 15.00, 
+      Anthropic: filteredPricingData.find(m => m.provider === 'Anthropic' && m.tier === 'high')?.inputCostPer1M ?? 5.00, 
       Google: 1.25 
     }
   ];
 
   // 1주일 단위 3사 가성비 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
-  const budgetHistoryData = [
+  const fallbackBudgetHistoryData = [
     { week: '07/03', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
     { week: '07/10', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
     { week: '07/17', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
@@ -113,78 +338,8 @@ export default function CalculatorDashboard() {
     }
   ];
 
-  // 3사 요금/출시 변동 히스토리 뉴스 데이터 (최신 3개만 슬라이스 노출 보장)
-  const providerNewsEvents = {
-    OpenAI: [
-      {
-        date: '2026-07-30',
-        isRecent: true,
-        title: 'GPT-5.6 Luna & Terra 단가 대폭 인하',
-        price: 'Luna $0.20, Terra $2.00',
-        desc: 'Luna 80% 인하 ($1.00 ➡️ $0.20) 및 Terra 20% 인하 ($2.50 ➡️ $2.00) 적용'
-      },
-      {
-        date: '2024-07-18',
-        isRecent: false,
-        title: 'GPT-5.6 Luna 공식 출시',
-        price: '$1.00 / $6.00',
-        desc: 'GPT-5.6 패밀리의 엔트리급 저가형 토큰 모델 론칭'
-      },
-      {
-        date: '2024-05-13',
-        isRecent: false,
-        title: '최상위 GPT-5.6 Sol 최초 출시',
-        price: '$5.00 / $30.00',
-        desc: 'OpenAI 플래그십 핵심 지능 엔진 출시 및 단가 기준선 설정'
-      }
-    ],
-    Anthropic: [
-      {
-        date: '2026-02-17',
-        isRecent: true,
-        title: 'Claude Sonnet 4.6 공식 출시',
-        price: '$3.00 / $15.00',
-        desc: '속도와 성능의 완벽한 균형, 대부분의 일상 작업에 적합 (1M 컨텍스트, 64K 출력)'
-      },
-      {
-        date: '2026-02-05',
-        isRecent: true,
-        title: '최상위 Claude Opus 4.6 공식 출시',
-        price: '$5.00 / $25.00',
-        desc: '가장 뛰어난 추론·코딩 성능 및 Fast Mode 지원 (1M 컨텍스트, 128K 출력)'
-      },
-      {
-        date: '2025-10-15',
-        isRecent: false,
-        title: 'Claude Haiku 4.5 공식 출시',
-        price: '$1.00 / $5.00',
-        desc: '가장 빠르고 가벼움, 간단한 대규모 태스크에 최적화 (200K 컨텍스트)'
-      }
-    ],
-    Google: [
-      {
-        date: '2025-09-01',
-        isRecent: true,
-        title: 'Gemini 1.5 계열 단가 개편 및 가격 파괴 선언',
-        price: 'Pro $1.25 / $5.00, Flash $0.075 / $0.30',
-        desc: 'Pro 및 Flash 입력 비용 파격 인하로 업계 최저가 갱신 단행'
-      },
-      {
-        date: '2024-05-14',
-        isRecent: false,
-        title: 'Gemini 1.5 Flash 공식 출시',
-        price: '$0.075 / $0.30',
-        desc: '경량형 모델 라인의 가격 한계 돌파 및 대용량 지원'
-      },
-      {
-        date: '2024-02-15',
-        isRecent: false,
-        title: '최상위 Gemini 1.5 Pro 최초 출시',
-        price: '$7.00 / $21.00',
-        desc: '출시가 ($7.00 / $21.00)에서 이후 ($1.25 / $5.00)로 단가 82% 대폭 인하 및 차세대 Pro ($2.00 / $12.00)'
-      }
-    ]
-  };
+  const flagshipHistoryData = trendData.high.length ? trendData.high : fallbackFlagshipHistoryData;
+  const budgetHistoryData = trendData.mid.length ? trendData.mid : fallbackBudgetHistoryData;
 
   // Dynamic user token usages state
   const [tokenUsage, setTokenUsage] = useState<Record<UserType, UserTokenUsage>>(DEFAULT_TOKEN_USAGE);
@@ -203,37 +358,53 @@ export default function CalculatorDashboard() {
 
   // Initialize and Fetch price constants / API simulation
   useEffect(() => {
-    setMounted(true);
     const agent = new PricingDataAgent();
-    setLoading(true);
     agent.fetchPricingData()
       .then((data) => {
         setPricingData(data);
-        setLoading(false);
       })
       .catch((err) => {
         console.error(err);
-        setFetchError('단가 데이터를 실시간 로드하는 중 에러가 발생하여 안전한 Fallback 단가 상수를 사용합니다.');
         setPricingData(agent.getPricingData());
-        setLoading(false);
       });
   }, []);
 
   const handleRatioChange = (type: UserType, value: number) => {
-    const agent = new UIStateAgent(history);
-    const { newRatios, newHistory } = agent.adjustRatios(ratios, type, value);
-    setRatios(newRatios);
-    setHistory(newHistory);
+    const roundRatio = (num: number) => Math.round(num * 10) / 10;
+
+    if (type === 'stdDev' || type === 'heavyDev') {
+      const devTotal = developerRatio;
+      const boundedValue = Math.max(0, Math.min(devTotal, value));
+      const pairedType = type === 'stdDev' ? 'heavyDev' : 'stdDev';
+
+      setRatios({
+        ...ratios,
+        [type]: roundRatio(boundedValue),
+        [pairedType]: roundRatio(devTotal - boundedValue),
+      });
+      return;
+    }
+
+    const userTotal = 100 - developerRatio;
+    const boundedValue = Math.max(0, Math.min(userTotal, value));
+    const pairedType = type === 'light' ? 'heavy' : 'light';
+
+    setRatios({
+      ...ratios,
+      [type]: roundRatio(boundedValue),
+      [pairedType]: roundRatio(userTotal - boundedValue),
+    });
   };
 
   const handleCountChange = (type: UserType, value: number) => {
-    const boundedCount = Math.max(0, Math.min(totalUsers, value));
+    const devTotalCount = Math.round(totalUsers * (developerRatio / 100));
+    const userTotalCount = totalUsers - devTotalCount;
+    const boundedCount = type === 'stdDev' || type === 'heavyDev'
+      ? Math.max(0, Math.min(devTotalCount, value))
+      : Math.max(0, Math.min(userTotalCount, value));
     const targetPercent = totalUsers > 0 ? (boundedCount / totalUsers) * 100 : 0;
-    
-    const agent = new UIStateAgent(history);
-    const { newRatios, newHistory } = agent.adjustRatios(ratios, type, targetPercent);
-    setRatios(newRatios);
-    setHistory(newHistory);
+
+    handleRatioChange(type, targetPercent);
   };
 
   const handleDeveloperRatioChange = (value: number) => {
@@ -326,22 +497,6 @@ export default function CalculatorDashboard() {
     }
   };
 
-  const handleForceFetch = () => {
-    const agent = new PricingDataAgent();
-    setLoading(true);
-    setFetchError(null);
-    agent.fetchPricingData()
-      .then((data) => {
-        setPricingData(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setFetchError('외부 연결 오류로 로컬 백업 단가 데이터를 유지합니다.');
-        setLoading(false);
-      });
-  };
-
   // Execute Simulation Engine (calculates both individual and provider blended costs)
   const engine = new SimulationEngineAgent();
   const { results, providerResults, summary } = engine.runSimulation(
@@ -353,17 +508,6 @@ export default function CalculatorDashboard() {
     tokenUsage
   );
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-[#070a13] text-slate-100 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="animate-spin text-indigo-500 w-10 h-10" />
-          <p className="text-slate-400 font-medium">시뮬레이션 엔진 로딩 중...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Formatting helpers
   const formatNumber = (num: number, maxDecimals: number = 0) => {
     return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: maxDecimals }).format(num);
@@ -374,6 +518,16 @@ export default function CalculatorDashboard() {
       return `$${formatNumber(amount, 0)}`;
     }
     return `₩${formatNumber(amount, 0)}`;
+  };
+
+  const toFiniteNumber = (value: ChartValue) => {
+    const rawValue = Array.isArray(value) ? value[0] : value;
+    const numericValue = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  };
+
+  const formatDollarTooltip = (value: ChartValue, decimals: number) => {
+    return [`$${toFiniteNumber(value).toFixed(decimals)}`, ''];
   };
 
   // Mapping providers to specific branding colors
@@ -434,32 +588,6 @@ export default function CalculatorDashboard() {
         tierLabel: `최상위 ${p.highRatio}% / 가성비 ${p.midRatio}%`
       }));
 
-  // Recharts custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl shadow-2xl backdrop-blur-xl">
-          <p className="font-bold text-white text-base mb-1">{data.name}</p>
-          <p className="text-slate-400 text-xs mb-2">
-            {chartMode === 'individual' ? `제공사: ${data.provider} | ${data.tierLabel} 모델` : data.tierLabel}
-          </p>
-          <div className="border-t border-slate-800 pt-2 flex flex-col gap-1 text-sm">
-            <div className="flex justify-between gap-6">
-              <span className="text-slate-400">USD 비용:</span>
-              <span className="font-bold text-white">${formatNumber(data.usdCost, 2)}</span>
-            </div>
-            <div className="flex justify-between gap-6">
-              <span className="text-indigo-400 font-medium">KRW 비용:</span>
-              <span className="font-bold text-indigo-300">₩{formatNumber(data.krwCost, 0)}</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div className="min-h-screen bg-[#070a13] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-950/20 via-[#070a13] to-[#070a13] text-slate-100 p-6 md:p-10 font-sans">
       
@@ -483,21 +611,29 @@ export default function CalculatorDashboard() {
           <div className="flex items-center gap-2 text-[10px] text-slate-400 bg-slate-950/80 border border-slate-800/60 px-2.5 py-1 rounded-full font-mono">
             <span className="font-bold text-indigo-400">v1.4.0</span>
             <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-            <span>최근 업데이트: 2026-07-29</span>
+            <span>앱 업데이트: {APP_UPDATED_AT}</span>
+            <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
+            <span>데이터 업데이트: {dataUpdatedAt}</span>
           </div>
           <div className="flex items-center gap-3">
 
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleMarkdownUpload} 
+              className="hidden" 
+              accept=".md" 
+            />
             <button
-              onClick={handleForceFetch}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700/80 active:bg-slate-800 border border-slate-700 text-slate-300 rounded-lg text-sm transition-all duration-200 disabled:opacity-50"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border border-indigo-500/30 text-white shadow-lg rounded-lg text-xs font-bold transition-all duration-200"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>단가 갱신</span>
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>데이터 갱신 (.md)</span>
             </button>
             <div className="text-right hidden sm:block">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                Pricing-Data-Agent Online
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Markdown Engine Active
               </span>
             </div>
           </div>
@@ -632,7 +768,7 @@ export default function CalculatorDashboard() {
                   <input
                     type="range"
                     min="0"
-                    max="100"
+                    max={100 - developerRatio}
                     step="0.1"
                     value={ratios.light}
                     onChange={(e) => handleRatioChange('light', parseFloat(e.target.value))}
@@ -663,7 +799,7 @@ export default function CalculatorDashboard() {
                   <input
                     type="range"
                     min="0"
-                    max="100"
+                    max={100 - developerRatio}
                     step="0.1"
                     value={ratios.heavy}
                     onChange={(e) => handleRatioChange('heavy', parseFloat(e.target.value))}
@@ -697,7 +833,7 @@ export default function CalculatorDashboard() {
                   <input
                     type="range"
                     min="0"
-                    max="100"
+                    max={developerRatio}
                     step="0.1"
                     value={ratios.stdDev}
                     onChange={(e) => handleRatioChange('stdDev', parseFloat(e.target.value))}
@@ -728,7 +864,7 @@ export default function CalculatorDashboard() {
                   <input
                     type="range"
                     min="0"
-                    max="100"
+                    max={developerRatio}
                     step="0.1"
                     value={ratios.heavyDev}
                     onChange={(e) => handleRatioChange('heavyDev', parseFloat(e.target.value))}
@@ -1007,7 +1143,7 @@ export default function CalculatorDashboard() {
                   <YAxis
                     hide={true}
                   />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: '#334155', opacity: 0.15 }} />
+                  <Tooltip content={<CostTooltip chartMode={chartMode} formatNumber={formatNumber} />} cursor={{ fill: '#334155', opacity: 0.15 }} />
                   <Bar
                     dataKey="cost"
                     radius={[8, 8, 0, 0]}
@@ -1019,11 +1155,12 @@ export default function CalculatorDashboard() {
                     <LabelList
                       dataKey="cost"
                       position="top"
-                      formatter={(v: any) => {
+                      formatter={(v: ChartValue) => {
+                        const value = toFiniteNumber(v);
                         if (currencyMode === 'USD') {
-                          return `$${formatNumber(v, 0)}`;
+                          return `$${formatNumber(value, 0)}`;
                         }
-                        return `₩${formatNumber(v)}`;
+                        return `₩${formatNumber(value)}`;
                       }}
                       fill="#94a3b8"
                       fontSize={10}
@@ -1278,9 +1415,8 @@ export default function CalculatorDashboard() {
                           onChange={(e) => setSelectedAnthropicHighModelName(e.target.value)}
                           className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-xs cursor-pointer hover:border-slate-600 transition-colors"
                         >
-                          <option value="Claude 3 Opus">Claude 3 Opus</option>
-                          <option value="Claude Opus 4.6">Claude Opus 4.6</option>
                           <option value="Claude Fable 5">Claude Fable 5</option>
+                          <option value="Claude Opus 4.6">Claude Opus 4.6</option>
                           <option value="Claude Sonnet 4.6">Claude Sonnet 4.6</option>
                         </select>
                       ) : (
@@ -1312,6 +1448,158 @@ export default function CalculatorDashboard() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* 4.5. Active Model Performance Comparison Table */}
+      <section className="max-w-7xl mx-auto mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* High-tier Performance Table */}
+        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800/80 rounded-2xl p-5 shadow-xl overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                <span>최상위(High-tier) 모델 성능 비교</span>
+              </h2>
+              <span className="text-[9px] text-violet-300 font-bold bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/20 font-mono">
+                High-tier Leaderboard
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 font-semibold bg-slate-950/40">
+                    <th className="py-2 px-3">회사</th>
+                    <th className="py-2 px-3">모델명</th>
+                    <th className="py-2 px-3 text-center">컨텍스트</th>
+                    <th className="py-2 px-3 text-center">출력 한도</th>
+                    <th className="py-2 px-3 text-center text-violet-300 font-bold">MMLU-Pro</th>
+                    <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40">
+                  {[...results]
+                    .filter(m => m.tier === 'high')
+                    .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                    .map((model, index) => {
+                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', mmlu: '-' };
+                      return (
+                        <tr key={index} className="hover:bg-slate-800/10 transition-colors">
+                          <td className="py-2.5 px-3 font-bold">
+                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] ${getProviderBgColor(model.provider)}`}>
+                              {model.provider}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-white">{model.modelName}</td>
+                          <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.context}</td>
+                          <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.maxOutput}</td>
+                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-violet-300 bg-violet-500/5">{spec.mmlu}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-[10px] text-slate-300">
+                            ${model.inputCostPer1M.toFixed(model.inputCostPer1M < 0.1 ? 3 : 2)} / ${model.outputCostPer1M.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            {/* 세부 특징 특징점 요약 피드 */}
+            <div className="mt-3.5 space-y-2 border-t border-slate-800/60 pt-3">
+              {[...results]
+                .filter(m => m.tier === 'high')
+                .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                .map((model, index) => {
+                  const spec = performanceDb[model.modelName] || { features: '' };
+                  return (
+                    <div key={index} className="text-[10px] text-slate-400 flex items-start gap-1.5">
+                      <span className="text-[9px] font-bold text-slate-500 bg-slate-950 px-1 py-0.5 rounded border border-slate-800 shrink-0 font-mono w-[65px] text-center">{model.provider}</span>
+                      <span>{spec.features}</span>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+
+        {/* Mid-tier Performance Table */}
+        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800/80 rounded-2xl p-5 shadow-xl overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span>가성비(Mid-tier) 모델 성능 비교</span>
+              </h2>
+              <span className="text-[9px] text-emerald-300 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
+                Mid-tier Leaderboard
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 font-semibold bg-slate-950/40">
+                    <th className="py-2 px-3">회사</th>
+                    <th className="py-2 px-3">모델명</th>
+                    <th className="py-2 px-3 text-center">컨텍스트</th>
+                    <th className="py-2 px-3 text-center">출력 한도</th>
+                    <th className="py-2 px-3 text-center text-emerald-300 font-bold">MMLU-Pro</th>
+                    <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40">
+                  {[...results]
+                    .filter(m => m.tier === 'mid')
+                    .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                    .map((model, index) => {
+                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', mmlu: '-' };
+                      return (
+                        <tr key={index} className="hover:bg-slate-800/10 transition-colors">
+                          <td className="py-2.5 px-3 font-bold">
+                            <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] ${getProviderBgColor(model.provider)}`}>
+                              {model.provider}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-white">{model.modelName}</td>
+                          <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.context}</td>
+                          <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.maxOutput}</td>
+                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-emerald-300 bg-emerald-500/5">{spec.mmlu}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-[10px] text-slate-300">
+                            ${model.inputCostPer1M.toFixed(model.inputCostPer1M < 0.1 ? 3 : 2)} / ${model.outputCostPer1M.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+            {/* 세부 특징 특징점 요약 피드 */}
+            <div className="mt-3.5 space-y-2 border-t border-slate-800/60 pt-3">
+              {[...results]
+                .filter(m => m.tier === 'mid')
+                .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                .map((model, index) => {
+                  const spec = performanceDb[model.modelName] || { features: '' };
+                  return (
+                    <div key={index} className="text-[10px] text-slate-400 flex items-start gap-1.5">
+                      <span className="text-[9px] font-bold text-slate-500 bg-slate-950 px-1 py-0.5 rounded border border-slate-800 shrink-0 font-mono w-[65px] text-center">{model.provider}</span>
+                      <span>{spec.features}</span>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+
+        {/* MMLU-Pro Description Footer Note */}
+        <div className="col-span-1 lg:col-span-2 text-[10px] text-slate-400 bg-slate-950/40 border border-slate-800/80 p-3.5 rounded-xl leading-relaxed flex items-start gap-2.5 shadow-md">
+          <Info className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-slate-200">MMLU-Pro 벤치마크란?</span>
+            <p className="mt-1 text-slate-400">
+              대학 학부생 수준의 다학제적 객관식 지식 평가(MMLU) 지표에 고난이도 추론, 다단계 수학적 문제 해결, 그리고 실제 코드 생성/디버깅 검증 능력을 결합하여 변별력을 극대화한 최신 종합 인공지능 지능 평가 기준입니다. 위의 스펙 표들은 MMLU-Pro의 종합 득점 백분율(%) 지수가 높은 순서대로 실시간 자동 배열됩니다.
+            </p>
+          </div>
+        </div>
+
       </section>
 
       {/* 5.5. AI Model Pricing Trend Analysis (Added: Dual 2-Column charts for Flagship & Budget) */}
@@ -1363,7 +1651,7 @@ export default function CalculatorDashboard() {
                     fontSize: '11px',
                     fontFamily: 'monospace'
                   }}
-                  formatter={(value: any) => [`$${value.toFixed(2)}`, '']}
+                  formatter={(value: ChartValue) => formatDollarTooltip(value, 2)}
                 />
                 <Legend 
                   wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
@@ -1448,7 +1736,7 @@ export default function CalculatorDashboard() {
                     fontSize: '11px',
                     fontFamily: 'monospace'
                   }}
-                  formatter={(value: any) => [`$${value.toFixed(3)}`, '']}
+                  formatter={(value: ChartValue) => formatDollarTooltip(value, 3)}
                 />
                 <Legend 
                   wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
@@ -1508,15 +1796,15 @@ export default function CalculatorDashboard() {
               <span className="font-bold text-slate-200">OpenAI (GPT 시리즈)</span>
             </div>
             <div className="space-y-3">
-              {providerNewsEvents.OpenAI.slice(0, 3).map((item, idx) => (
+              {newsEvents.OpenAI.slice(0, 3).map((item, idx) => (
                 <div key={idx} className="flex flex-col gap-1">
-                  <span className={`text-[10px] font-semibold ${item.isRecent ? 'text-emerald-400' : 'text-slate-500'}`}>
-                    {item.date} {item.isRecent && '(최근)'}
+                  <span className={`text-[10px] font-semibold ${idx === 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                    {item.date} {idx === 0 && '(최근)'}
                   </span>
                   <span className="text-slate-300 font-bold">
-                    {item.title} ({item.price})
+                    {item.headline}
                   </span>
-                  <p className="text-[10px] text-slate-500 leading-normal">{item.desc}</p>
+                  <p className="text-[10px] text-slate-500 leading-normal">{item.content}</p>
                 </div>
               ))}
             </div>
@@ -1529,15 +1817,15 @@ export default function CalculatorDashboard() {
               <span className="font-bold text-slate-200">Anthropic (Claude 시리즈)</span>
             </div>
             <div className="space-y-3">
-              {providerNewsEvents.Anthropic.slice(0, 3).map((item, idx) => (
+              {newsEvents.Anthropic.slice(0, 3).map((item, idx) => (
                 <div key={idx} className="flex flex-col gap-1">
-                  <span className={`text-[10px] font-semibold ${item.isRecent ? 'text-amber-400' : 'text-slate-500'}`}>
-                    {item.date} {item.isRecent && '(최근)'}
+                  <span className={`text-[10px] font-semibold ${idx === 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+                    {item.date} {idx === 0 && '(최근)'}
                   </span>
                   <span className="text-slate-300 font-bold">
-                    {item.title} ({item.price})
+                    {item.headline}
                   </span>
-                  <p className="text-[10px] text-slate-500 leading-normal">{item.desc}</p>
+                  <p className="text-[10px] text-slate-500 leading-normal">{item.content}</p>
                 </div>
               ))}
             </div>
@@ -1550,15 +1838,15 @@ export default function CalculatorDashboard() {
               <span className="font-bold text-slate-200">Google (Gemini 시리즈)</span>
             </div>
             <div className="space-y-3">
-              {providerNewsEvents.Google.slice(0, 3).map((item, idx) => (
+              {newsEvents.Google.slice(0, 3).map((item, idx) => (
                 <div key={idx} className="flex flex-col gap-1">
-                  <span className={`text-[10px] font-semibold ${item.isRecent ? 'text-blue-400' : 'text-slate-500'}`}>
-                    {item.date} {item.isRecent && '(최근)'}
+                  <span className={`text-[10px] font-semibold ${idx === 0 ? 'text-blue-400' : 'text-slate-500'}`}>
+                    {item.date} {idx === 0 && '(최근)'}
                   </span>
                   <span className="text-slate-300 font-bold">
-                    {item.title} ({item.price})
+                    {item.headline}
                   </span>
-                  <p className="text-[10px] text-slate-500 leading-normal">{item.desc}</p>
+                  <p className="text-[10px] text-slate-500 leading-normal">{item.content}</p>
                 </div>
               ))}
             </div>

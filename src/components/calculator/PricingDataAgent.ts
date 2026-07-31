@@ -6,8 +6,10 @@ export interface ModelPricing {
   outputCostPer1M: number; // 1M tokens in USD
 }
 
-export const FALLBACK_PRICING: ModelPricing[] = [
-  // 3사 대표 실거래 단가
+import dynamicData from './dynamicData.json';
+
+export const FALLBACK_PRICING: ModelPricing[] = (dynamicData.pricingData as ModelPricing[]) || [
+  // Local code fallbacks in case json import fails
   {
     modelName: 'GPT-5.6 Sol',
     provider: 'OpenAI',
@@ -28,13 +30,6 @@ export const FALLBACK_PRICING: ModelPricing[] = [
     tier: 'mid',
     inputCostPer1M: 0.20,
     outputCostPer1M: 1.20
-  },
-  {
-    modelName: 'Claude 3 Opus',
-    provider: 'Anthropic',
-    tier: 'high',
-    inputCostPer1M: 15.00,
-    outputCostPer1M: 75.00
   },
   {
     modelName: 'Claude Opus 4.6',
