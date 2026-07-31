@@ -98,14 +98,14 @@ function parseData() {
           const modelName = parts[0];
           const context = parts[1];
           const maxOutput = parts[2];
-          const mmlu = parts[3];
+          const valsIndex = parts[3];
           const features = parts[4];
 
           if (modelName) {
             performanceData[modelName] = {
               context,
               maxOutput,
-              mmlu,
+              valsIndex,
               features
             };
           }

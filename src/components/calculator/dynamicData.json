@@ -4,251 +4,294 @@
   },
   "pricingData": [
     {
-      "modelName": "GPT-5.6 Sol",
+      "modelName": "gpt-5.6-sol",
       "provider": "OpenAI",
       "tier": "high",
       "inputCostPer1M": 5,
       "outputCostPer1M": 30
     },
     {
-      "modelName": "GPT-5.6 Terra",
+      "modelName": "gpt-5.6-terra",
       "provider": "OpenAI",
       "tier": "high",
       "inputCostPer1M": 2,
       "outputCostPer1M": 12
     },
     {
-      "modelName": "GPT-5.6 Luna",
+      "modelName": "gpt-5.6-luna",
       "provider": "OpenAI",
       "tier": "mid",
       "inputCostPer1M": 0.2,
       "outputCostPer1M": 1.2
     },
     {
-      "modelName": "Claude Opus 4.6",
-      "provider": "Anthropic",
-      "tier": "high",
-      "inputCostPer1M": 5,
-      "outputCostPer1M": 25
+      "modelName": "gpt-5.4-nano",
+      "provider": "OpenAI",
+      "tier": "mid",
+      "inputCostPer1M": 0.2,
+      "outputCostPer1M": 1.25
     },
     {
-      "modelName": "Claude Fable 5",
+      "modelName": "claude-fable-5",
       "provider": "Anthropic",
       "tier": "high",
       "inputCostPer1M": 10,
       "outputCostPer1M": 50
     },
     {
-      "modelName": "Claude Sonnet 4.6",
+      "modelName": "claude-opus-5",
       "provider": "Anthropic",
       "tier": "high",
-      "inputCostPer1M": 3,
-      "outputCostPer1M": 15
+      "inputCostPer1M": 5,
+      "outputCostPer1M": 25
     },
     {
-      "modelName": "Claude Haiku 4.5",
+      "modelName": "claude-sonnet-5",
+      "provider": "Anthropic",
+      "tier": "mid",
+      "inputCostPer1M": 2,
+      "outputCostPer1M": 10
+    },
+    {
+      "modelName": "claude-haiku-4-5",
       "provider": "Anthropic",
       "tier": "mid",
       "inputCostPer1M": 1,
       "outputCostPer1M": 5
     },
     {
-      "modelName": "Gemini 1.5 Pro",
+      "modelName": "gemini-3.6-flash",
       "provider": "Google",
       "tier": "high",
-      "inputCostPer1M": 1.25,
-      "outputCostPer1M": 3.75
+      "inputCostPer1M": 1.5,
+      "outputCostPer1M": 7.5
     },
     {
-      "modelName": "Gemini 1.5 Flash",
+      "modelName": "gemini-3.5-flash",
+      "provider": "Google",
+      "tier": "high",
+      "inputCostPer1M": 1.5,
+      "outputCostPer1M": 9
+    },
+    {
+      "modelName": "gemini-3.5-flash-lite",
       "provider": "Google",
       "tier": "mid",
-      "inputCostPer1M": 0.075,
-      "outputCostPer1M": 0.3
+      "inputCostPer1M": 0.3,
+      "outputCostPer1M": 2.5
+    },
+    {
+      "modelName": "gemini-3.1-flash-lite",
+      "provider": "Google",
+      "tier": "mid",
+      "inputCostPer1M": 0.25,
+      "outputCostPer1M": 1.5
     }
   ],
   "performanceData": {
-    "GPT-5.6 Sol": {
-      "context": "2M",
-      "maxOutput": "16k",
-      "mmlu": "91.2%",
-      "features": "최상의 지능·추론, 전문 코딩, 멀티스텝 에이전트 특화"
-    },
-    "GPT-5.6 Terra": {
-      "context": "1M",
-      "maxOutput": "8k",
-      "mmlu": "84.8%",
-      "features": "가성비와 지능의 균형, 비즈니스 자동화, 프롭 임베딩 최적화"
-    },
-    "GPT-5.6 Luna": {
-      "context": "1M",
-      "maxOutput": "8k",
-      "mmlu": "78.5%",
-      "features": "초경량 고속 연산, 대용량 트래픽 응답, 80% 요금 인하 수혜"
-    },
-    "Claude Opus 4.6": {
+    "gpt-5.6-sol": {
       "context": "1M",
       "maxOutput": "128k",
-      "mmlu": "92.5%",
-      "features": "독보적 코딩·추론 지능, Fast Mode 지원(속도 2.5배, 가격 6배)"
+      "valsIndex": "73.12%",
+      "features": "복잡한 전문 작업과 장기 추론, 코딩 에이전트 워크플로에 적합한 OpenAI 최상위 모델"
     },
-    "Claude Fable 5": {
+    "gpt-5.6-terra": {
       "context": "1M",
+      "maxOutput": "128k",
+      "valsIndex": "65.14%",
+      "features": "지능과 비용 균형이 필요한 비즈니스 자동화와 대량 추론 작업에 적합한 모델"
+    },
+    "gpt-5.6-luna": {
+      "context": "1M",
+      "maxOutput": "128k",
+      "valsIndex": "69.88%",
+      "features": "비용 민감형 고트래픽 워크로드와 빠른 대량 응답에 적합한 경량 모델"
+    },
+    "gpt-5.4-nano": {
+      "context": "-",
+      "maxOutput": "-",
+      "valsIndex": "없음",
+      "features": "초저가 단순 응답과 대규모 트래픽 처리에 적합한 이전 세대 경량 모델"
+    },
+    "claude-fable-5": {
+      "context": "1M",
+      "maxOutput": "128k",
+      "valsIndex": "75.14%",
+      "features": "Anthropic의 최고 성능 일반 제공 모델로 장기 실행 에이전트와 고난도 추론에 적합"
+    },
+    "claude-opus-5": {
+      "context": "1M",
+      "maxOutput": "128k",
+      "valsIndex": "74.82%",
+      "features": "복잡한 에이전트 코딩과 엔터프라이즈 지식 작업에 적합한 고성능 모델"
+    },
+    "claude-sonnet-5": {
+      "context": "1M",
+      "maxOutput": "128k",
+      "valsIndex": "68.61%",
+      "features": "속도와 지능의 조합이 중요한 코딩, 분석, 실무 자동화에 적합한 모델"
+    },
+    "claude-haiku-4-5": {
+      "context": "200k",
       "maxOutput": "64k",
-      "mmlu": "90.0%",
-      "features": "고난도 언어적 문제 해결 및 다중 추론, 차세대 지능 엔진"
+      "valsIndex": "40.90%",
+      "features": "가장 빠른 Claude 계열 모델로 지연시간이 중요한 대량 처리에 적합"
     },
-    "Claude Sonnet 4.6": {
-      "context": "1M",
-      "maxOutput": "64k",
-      "mmlu": "88.7%",
-      "features": "속도와 성능의 조화, 프로페셔널 코드 리팩토링 특화"
+    "gemini-3.6-flash": {
+      "context": "-",
+      "maxOutput": "-",
+      "valsIndex": "62.43%",
+      "features": "속도와 지능을 균형 있게 제공하는 Google의 최신 안정 Flash 모델"
     },
-    "Claude Haiku 4.5": {
-      "context": "0.2M",
-      "maxOutput": "4k",
-      "mmlu": "79.2%",
-      "features": "최경량 고속 서빙, 프롬프트 캐싱 hit 시 비용 90% 상시 할인"
+    "gemini-3.5-flash": {
+      "context": "-",
+      "maxOutput": "-",
+      "valsIndex": "62.75%",
+      "features": "에이전트, 코딩, 검색 및 grounding 중심 작업에 적합한 고효율 Flash 모델"
     },
-    "Gemini 1.5 Pro": {
-      "context": "2M",
-      "maxOutput": "8k",
-      "mmlu": "85.9%",
-      "features": "200만 토큰 압도적 콘텍스트 창, 비디오·오디오 직접 네이티브 분석"
+    "gemini-3.5-flash-lite": {
+      "context": "-",
+      "maxOutput": "-",
+      "valsIndex": "51.00%",
+      "features": "고처리량 에이전트 작업, 번역, 단순 데이터 처리에 적합한 최저비용 GA 모델"
     },
-    "Gemini 1.5 Flash": {
-      "context": "1M",
-      "maxOutput": "8k",
-      "mmlu": "78.9%",
-      "features": "1M 콘텍스트 가성비 최고봉, 대형 오디오 다이렉트 처리 최적화"
+    "gemini-3.1-flash-lite": {
+      "context": "-",
+      "maxOutput": "-",
+      "valsIndex": "없음",
+      "features": "저비용 텍스트, 이미지, 비디오 처리와 단순 데이터 처리에 적합한 이전 세대 Flash-Lite 모델"
     }
   },
   "newsData": {
     "OpenAI": [
       {
         "date": "2026-07-30",
-        "headline": "GPT-5.6 저가 티어 대폭 인하 단행",
-        "content": "GPT-5.6 Luna(입력 $0.20/출력 $1.20) 80% 인하 및 Terra(입력 $2.00/출력 $12.00) 20% 인하 적용"
+        "headline": "GPT-5.6 Terra와 Luna 가격 인하 확인",
+        "content": "gpt-5.6-terra와 gpt-5.6-luna 최신 모델 페이지 기준 요금 반영 (입력 $2.00/출력 $12.00, 입력 $0.20/출력 $1.20)"
       },
       {
-        "date": "2026-06-15",
-        "headline": "GPT-5.6 솔루션 제품군 공식 출시",
-        "content": "차세대 플래그십 GPT-5.6 Sol(입력 $5.00/출력 $30.00) 및 Terra 등 3색 라인업 동시 공개"
-      },
-      {
-        "date": "2024-05-13",
-        "headline": "GPT-4o 멀티모달 플래그십 출시",
-        "content": "혁신적인 옴니 모델 최초 런칭 (출시 당시 입력 $5.00 / 출력 $15.00)"
+        "date": "2026-02-16",
+        "headline": "GPT-5.6 모델군 문서 기준 스펙 확인",
+        "content": "gpt-5.6-sol은 1,050,000 컨텍스트와 128,000 출력 한도를 제공 (입력 $5.00/출력 $30.00)"
       }
     ],
     "Anthropic": [
       {
-        "date": "2026-02-17",
-        "headline": "Claude Sonnet 4.6 출시",
-        "content": "업계 최고의 연산 속도와 코딩 능력 제공 (입력 $3.00 / 출력 $15.00)"
+        "date": "2026-07-24",
+        "headline": "Claude Opus 5 출시 및 가격 유지",
+        "content": "claude-opus-5는 Opus 4.8과 같은 가격으로 제공됨 (입력 $5.00/출력 $25.00)"
       },
       {
-        "date": "2026-02-05",
-        "headline": "Claude Opus 4.6 공식 발표",
-        "content": "전작 대비 지능 대폭 상향 및 가격 인하 (입력 $5.00 / 출력 $25.00)"
+        "date": "2026-06-09",
+        "headline": "Claude Fable 5 일반 제공 시작",
+        "content": "claude-fable-5는 Claude API에서 일반 제공되며 최고 성능 모델로 분류됨 (입력 $10.00/출력 $50.00)"
       },
       {
-        "date": "2025-09-01",
-        "headline": "Claude Haiku 4.5 출시",
-        "content": "초저지연 실시간 연산 성능 극대화 (입력 $1.00 / 출력 $5.00)"
+        "date": "2026-06-01",
+        "headline": "Claude Sonnet 5 임시 가격 적용",
+        "content": "claude-sonnet-5는 2026-08-31까지 introductory pricing 적용 (입력 $2.00/출력 $10.00)"
       }
     ],
     "Google": [
       {
-        "date": "2026-07-15",
-        "headline": "Gemini 1.5 Pro 단가 75% 파격 인하",
-        "content": "200만 컨텍스트의 Pro 모델 입력 비용을 획기적으로 인하 (기존 $7.00 ➡️ $1.25)"
+        "date": "2026-07-24",
+        "headline": "Gemini 3.6 Flash와 3.5 Flash-Lite 안정 모델군 확인",
+        "content": "gemini-3.6-flash Standard와 gemini-3.5-flash-lite Standard 요금 반영 (입력 $1.50/출력 $7.50, 입력 $0.30/출력 $2.50)"
       },
       {
-        "date": "2024-05-14",
-        "headline": "Gemini 1.5 Flash 1M 컨텍스트 출시",
-        "content": "가성비 극대화 모델 출시 (출시 당시 입력 $0.075 / 출력 $0.30)"
-      },
-      {
-        "date": "2024-02-15",
-        "headline": "Gemini 1.5 Pro 개발자용 최초 런칭",
-        "content": "세계 최초 100만 컨텍스트 윈도우 지원형 모델 발표 (출시 당시 입력 $7.00 / 출력 $21.00)"
+        "date": "2026-05-20",
+        "headline": "Gemini 3.5 Flash 안정 모델 가격 확인",
+        "content": "gemini-3.5-flash Standard 기준 요금 반영 (입력 $1.50/출력 $9.00)"
       }
     ]
   },
   "trendData": {
     "high": [
       {
-        "date": "2026-07-03",
-        "week": "07/03",
+        "date": "2026-02-28",
+        "week": "02/28",
         "OpenAI": 5,
-        "Anthropic": 5,
-        "Google": 7
+        "Anthropic": 10,
+        "Google": 1.5
       },
       {
-        "date": "2026-07-10",
-        "week": "07/10",
+        "date": "2026-03-31",
+        "week": "03/31",
         "OpenAI": 5,
-        "Anthropic": 5,
-        "Google": 7
+        "Anthropic": 10,
+        "Google": 1.5
       },
       {
-        "date": "2026-07-17",
-        "week": "07/17",
+        "date": "2026-04-30",
+        "week": "04/30",
         "OpenAI": 5,
-        "Anthropic": 5,
-        "Google": 1.25
+        "Anthropic": 10,
+        "Google": 1.5
       },
       {
-        "date": "2026-07-24",
-        "week": "07/24",
+        "date": "2026-05-31",
+        "week": "05/31",
         "OpenAI": 5,
-        "Anthropic": 5,
-        "Google": 1.25
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-06-30",
+        "week": "06/30",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
       },
       {
         "date": "2026-07-31",
         "week": "07/31",
         "OpenAI": 5,
-        "Anthropic": 5,
-        "Google": 1.25
+        "Anthropic": 10,
+        "Google": 1.5
       }
     ],
     "mid": [
       {
-        "date": "2026-07-03",
-        "week": "07/03",
+        "date": "2026-02-28",
+        "week": "02/28",
         "OpenAI": 1,
         "Anthropic": 1,
-        "Google": 0.075
+        "Google": 0.3
       },
       {
-        "date": "2026-07-10",
-        "week": "07/10",
+        "date": "2026-03-31",
+        "week": "03/31",
         "OpenAI": 1,
         "Anthropic": 1,
-        "Google": 0.075
+        "Google": 0.3
       },
       {
-        "date": "2026-07-17",
-        "week": "07/17",
+        "date": "2026-04-30",
+        "week": "04/30",
         "OpenAI": 1,
         "Anthropic": 1,
-        "Google": 0.075
+        "Google": 0.3
       },
       {
-        "date": "2026-07-24",
-        "week": "07/24",
+        "date": "2026-05-31",
+        "week": "05/31",
         "OpenAI": 1,
         "Anthropic": 1,
-        "Google": 0.075
+        "Google": 0.3
+      },
+      {
+        "date": "2026-06-30",
+        "week": "06/30",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
       },
       {
         "date": "2026-07-31",
         "week": "07/31",
         "OpenAI": 0.2,
         "Anthropic": 1,
-        "Google": 0.075
+        "Google": 0.3
       }
     ]
   }

@@ -8,28 +8,23 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { Users, DollarSign, RefreshCw, Layers, Award, Sparkles, TrendingUp, TrendingDown, Info, GitCompare } from 'lucide-react';
 import dynamicData from './dynamicData.json';
 
-const MODEL_PERFORMANCE_DB: Record<string, { context: string; maxOutput: string; mmlu: string; features: string }> = 
-  (dynamicData.performanceData as Record<string, { context: string; maxOutput: string; mmlu: string; features: string }>) || {
-    'GPT-5.6 Sol': { context: '2M', maxOutput: '16k', mmlu: '91.2%', features: '최상의 지능·추론, 전문 코딩, 멀티스텝 에이전트 특화' },
-    'GPT-5.6 Terra': { context: '1M', maxOutput: '8k', mmlu: '84.8%', features: '가성비와 지능의 균형, 비즈니스 자동화, 프롭 임베딩 최적화' },
-    'GPT-5.6 Luna': { context: '1M', maxOutput: '8k', mmlu: '78.5%', features: '초경량 고속 연산, 대용량 트래픽 응답, 80% 요금 인하 수혜' },
-    'Claude Opus 4.6': { context: '1M', maxOutput: '128k', mmlu: '92.5%', features: '독보적 코딩·추론 지능, Fast Mode 지원(속도 2.5배, 가격 6배)' },
-    'Claude Fable 5': { context: '1M', maxOutput: '64k', mmlu: '90.0%', features: '고난도 언어적 문제 해결 및 다중 추론, 차세대 지능 엔진' },
-    'Claude Sonnet 4.6': { context: '1M', maxOutput: '64k', mmlu: '88.7%', features: '속도와 성능의 조화, 프로페셔널 코드 리팩토링 특화' },
-    'Claude Haiku 4.5': { context: '0.2M', maxOutput: '4k', mmlu: '79.2%', features: '최경량 고속 서빙, 프롬프트 캐싱 hit 시 비용 90% 상시 할인' },
-    'Gemini 1.5 Pro': { context: '2M', maxOutput: '8k', mmlu: '85.9%', features: '200만 토큰 압도적 콘텍스트 창, 비디오·오디오 직접 네이티브 분석' },
-    'Gemini 1.5 Flash': { context: '1M', maxOutput: '8k', mmlu: '78.9%', features: '1M 콘텍스트 가성비 최고봉, 대형 오디오 다이렉트 처리 최적화' }
-  };
+type PerformanceSpec = { context: string; maxOutput: string; valsIndex: string; features: string };
 
-const getMmluVal = (modelName: string, db: Record<string, { mmlu: string }>) => {
+const MODEL_PERFORMANCE_DB: Record<string, PerformanceSpec> =
+  (dynamicData.performanceData as Record<string, PerformanceSpec>) || {};
+
+const getValsIndexVal = (modelName: string, db: Record<string, { valsIndex: string }>) => {
   const spec = db[modelName];
   if (!spec) return 0;
-  return parseFloat(spec.mmlu.replace('%', ''));
+  const score = parseFloat(spec.valsIndex.replace('%', ''));
+  return Number.isFinite(score) ? score : 0;
 };
 
 type ProviderName = 'OpenAI' | 'Anthropic' | 'Google';
+type ModelTier = 'high' | 'mid';
 type NewsEvent = { date: string; headline: string; content: string };
 type NewsEventsByProvider = Record<ProviderName, NewsEvent[]>;
+type SelectedModelBySlot = Partial<Record<`${ProviderName}:${ModelTier}`, string>>;
 type Metadata = { dataUpdatedAt?: string };
 type ChartValue = unknown;
 type TrendPoint = { date?: string; week: string; OpenAI: number; Anthropic: number; Google: number };
@@ -119,10 +114,11 @@ export default function CalculatorDashboard() {
 
   // pricing state for Pricing-Data-Agent
   const [pricingData, setPricingData] = useState<ModelPricing[]>(FALLBACK_PRICING);
+  const [selectedModelBySlot, setSelectedModelBySlot] = useState<SelectedModelBySlot>({});
   const [dataUpdatedAt, setDataUpdatedAt] = useState(DATA_METADATA.dataUpdatedAt || '확인 필요');
 
   // Dynamic performance and news events database states mapped from data.md
-  const [performanceDb, setPerformanceDb] = useState<Record<string, { context: string; maxOutput: string; mmlu: string; features: string }>>(MODEL_PERFORMANCE_DB);
+  const [performanceDb, setPerformanceDb] = useState<Record<string, PerformanceSpec>>(MODEL_PERFORMANCE_DB);
   const [newsEvents, setNewsEvents] = useState(PROVIDER_NEWS_EVENTS);
   const [trendData, setTrendData] = useState<{ high: TrendPoint[]; mid: TrendPoint[] }>({
     high: TREND_DATA.high || [],
@@ -135,7 +131,7 @@ export default function CalculatorDashboard() {
     const lines = content.split(/\r?\n/);
     const parsedMetadata: Metadata = {};
     const parsedPricing: ModelPricing[] = [];
-    const parsedPerformance: Record<string, { context: string; maxOutput: string; mmlu: string; features: string }> = {};
+    const parsedPerformance: Record<string, PerformanceSpec> = {};
     const parsedNews: NewsEventsByProvider = {
       OpenAI: [],
       Anthropic: [],
@@ -190,10 +186,10 @@ export default function CalculatorDashboard() {
           const modelName = parts[0];
           const context = parts[1];
           const maxOutput = parts[2];
-          const mmlu = parts[3];
+          const valsIndex = parts[3];
           const features = parts[4];
           if (modelName) {
-            parsedPerformance[modelName] = { context, maxOutput, mmlu, features };
+            parsedPerformance[modelName] = { context, maxOutput, valsIndex, features };
           }
         } else if (currentSection === 'news' && parts.length >= 4) {
           const provider = parts[0];
@@ -273,47 +269,58 @@ export default function CalculatorDashboard() {
     reader.readAsText(file);
   };
 
-  // OpenAI selected high-tier model choice ('GPT-5.6 Sol' vs 'GPT-5.6 Terra')
-  const [selectedOpenAIHighModelName, setSelectedOpenAIHighModelName] = useState<string>('GPT-5.6 Sol');
+  const providers: ProviderName[] = ['Google', 'OpenAI', 'Anthropic'];
+  const tiers: ModelTier[] = ['high', 'mid'];
 
-  // Anthropic selected high-tier model choice ('Claude Opus 4.6' vs other choices)
-  const [selectedAnthropicHighModelName, setSelectedAnthropicHighModelName] = useState<string>('Claude Opus 4.6');
+  const getModelOptions = (provider: ProviderName, tier: ModelTier) =>
+    pricingData.filter(model => model.provider === provider && model.tier === tier);
 
-  // Filter pricingData to only include the active models
-  const filteredPricingData = pricingData.filter(model => {
-    if (model.provider === 'OpenAI' && model.tier === 'high') {
-      return model.modelName === selectedOpenAIHighModelName;
-    }
-    if (model.provider === 'Anthropic' && model.tier === 'high') {
-      return model.modelName === selectedAnthropicHighModelName;
-    }
-    return true;
-  });
+  const getSelectedModelName = (provider: ProviderName, tier: ModelTier) => {
+    const options = getModelOptions(provider, tier);
+    const slotKey = `${provider}:${tier}` as const;
+    const selected = selectedModelBySlot[slotKey];
+    return options.some(model => model.modelName === selected) ? selected : options[0]?.modelName;
+  };
 
-  // 1주일 단위 3사 최상위 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
+  const filteredPricingData = providers.flatMap(provider =>
+    tiers.flatMap(tier => {
+      const selectedModelName = getSelectedModelName(provider, tier);
+      const selectedModel = getModelOptions(provider, tier).find(model => model.modelName === selectedModelName);
+      return selectedModel ? [selectedModel] : [];
+    })
+  );
+
+  const handleSelectedModelChange = (provider: ProviderName, tier: ModelTier, modelName: string) => {
+    setSelectedModelBySlot(prev => ({
+      ...prev,
+      [`${provider}:${tier}`]: modelName
+    }));
+  };
+
+  // 3사 최상위 기존 모델 Input 토큰 가격 추세 데이터 (최근 6개월 / 1M 토큰당 USD)
   const fallbackFlagshipHistoryData = [
     { 
       week: '07/03', 
-      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
+      OpenAI: 5.00, 
+      Anthropic: 10.00, 
       Google: 7.00 
     },
     { 
       week: '07/10', 
-      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
+      OpenAI: 5.00, 
+      Anthropic: 10.00, 
       Google: 7.00 
     },
     { 
       week: '07/17', 
-      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
+      OpenAI: 5.00, 
+      Anthropic: 10.00, 
       Google: 1.25 
     }, // Google 1.5 Pro 가격 인하 시점
     { 
       week: '07/24', 
-      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
-      Anthropic: selectedAnthropicHighModelName === 'Claude Fable 5' ? 10.00 : (selectedAnthropicHighModelName === 'Claude Opus 4.6' ? 5.00 : 3.00), 
+      OpenAI: 5.00, 
+      Anthropic: 10.00, 
       Google: 1.25 
     },
     { 
@@ -324,7 +331,7 @@ export default function CalculatorDashboard() {
     }
   ];
 
-  // 1주일 단위 3사 가성비 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
+  // 3사 가성비 기존 모델 Input 토큰 가격 추세 데이터 (최근 6개월 / 1M 토큰당 USD)
   const fallbackBudgetHistoryData = [
     { week: '07/03', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
     { week: '07/10', OpenAI: 1.00, Anthropic: 1.00, Google: 0.075 },
@@ -923,7 +930,7 @@ export default function CalculatorDashboard() {
                 </div>
 
                 <div className="text-[10px] text-slate-500 mb-3 font-semibold font-mono">
-                  {selectedOpenAIHighModelName} (최상위) vs {getModelNameByTier('OpenAI', 'mid')} (가성비)
+                  {getModelNameByTier('OpenAI', 'high')} (최상위) vs {getModelNameByTier('OpenAI', 'mid')} (가성비)
                 </div>
                 <input
                   type="range"
@@ -946,7 +953,7 @@ export default function CalculatorDashboard() {
                 </div>
 
                 <div className="text-[10px] text-slate-500 mb-3 font-semibold font-mono">
-                  {selectedAnthropicHighModelName} (최상위) vs {getModelNameByTier('Anthropic', 'mid')} (가성비)
+                  {getModelNameByTier('Anthropic', 'high')} (최상위) vs {getModelNameByTier('Anthropic', 'mid')} (가성비)
                 </div>
                 <input
                   type="range"
@@ -1392,59 +1399,58 @@ export default function CalculatorDashboard() {
                   }
                   return a.tier === 'high' ? -1 : 1;
                 })
-                .map((model, index) => (
-                  <tr key={index} className="hover:bg-slate-800/20 transition-colors">
-                    <td className="py-4 px-4 font-bold">
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-md border text-xs font-bold ${getProviderBgColor(model.provider)}`}>
-                        {model.provider}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 font-semibold text-white">
-                      {model.provider === 'OpenAI' && model.tier === 'high' ? (
-                        <select
-                          value={selectedOpenAIHighModelName}
-                          onChange={(e) => setSelectedOpenAIHighModelName(e.target.value)}
-                          className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-xs cursor-pointer hover:border-slate-600 transition-colors"
-                        >
-                          <option value="GPT-5.6 Sol">GPT-5.6 Sol</option>
-                          <option value="GPT-5.6 Terra">GPT-5.6 Terra</option>
-                        </select>
-                      ) : model.provider === 'Anthropic' && model.tier === 'high' ? (
-                        <select
-                          value={selectedAnthropicHighModelName}
-                          onChange={(e) => setSelectedAnthropicHighModelName(e.target.value)}
-                          className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-xs cursor-pointer hover:border-slate-600 transition-colors"
-                        >
-                          <option value="Claude Fable 5">Claude Fable 5</option>
-                          <option value="Claude Opus 4.6">Claude Opus 4.6</option>
-                          <option value="Claude Sonnet 4.6">Claude Sonnet 4.6</option>
-                        </select>
-                      ) : (
-                        <span className="font-mono text-xs text-slate-300 font-semibold">{model.modelName}</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4">
-                      {model.tier === 'high' ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full border border-violet-500/20">
-                          최상위 모델
+                .map((model, index) => {
+                  const provider = isProviderName(model.provider) ? model.provider : undefined;
+                  const tier = model.tier as ModelTier;
+                  const modelOptions = provider ? getModelOptions(provider, tier) : [];
+
+                  return (
+                    <tr key={`${model.provider}-${model.tier}-${model.modelName}-${index}`} className="hover:bg-slate-800/20 transition-colors">
+                      <td className="py-4 px-4 font-bold">
+                        <span className={`inline-flex px-2.5 py-0.5 rounded-md border text-xs font-bold ${getProviderBgColor(model.provider)}`}>
+                          {model.provider}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          가성비 모델
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 text-right font-mono text-slate-300">
-                      ${formatNumber(model.inputCostPer1M, 3)} / ${formatNumber(model.outputCostPer1M, 3)}
-                    </td>
-                    <td className="py-4 px-4 text-right font-mono font-bold text-white">
-                      ${formatNumber(model.usdCost, 0)}
-                    </td>
-                    <td className="py-4 px-4 text-right font-mono font-extrabold text-indigo-300 bg-indigo-500/5">
-                      ₩{formatNumber(model.krwCost, 0)}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-4 px-4 font-semibold text-white">
+                        {provider && modelOptions.length > 1 ? (
+                          <select
+                            value={model.modelName}
+                            onChange={(event) => handleSelectedModelChange(provider, tier, event.target.value)}
+                            className="w-full max-w-[220px] bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-xs cursor-pointer hover:border-slate-600 transition-colors"
+                          >
+                            {modelOptions.map(option => (
+                              <option key={option.modelName} value={option.modelName}>
+                                {option.modelName}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="font-mono text-xs text-slate-300 font-semibold">{model.modelName}</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        {model.tier === 'high' ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full border border-violet-500/20">
+                            최상위 모델
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            가성비 모델
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-right font-mono text-slate-300">
+                        ${formatNumber(model.inputCostPer1M, 3)} / ${formatNumber(model.outputCostPer1M, 3)}
+                      </td>
+                      <td className="py-4 px-4 text-right font-mono font-bold text-white">
+                        ${formatNumber(model.usdCost, 0)}
+                      </td>
+                      <td className="py-4 px-4 text-right font-mono font-extrabold text-indigo-300 bg-indigo-500/5">
+                        ₩{formatNumber(model.krwCost, 0)}
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -1473,16 +1479,16 @@ export default function CalculatorDashboard() {
                     <th className="py-2 px-3">모델명</th>
                     <th className="py-2 px-3 text-center">컨텍스트</th>
                     <th className="py-2 px-3 text-center">출력 한도</th>
-                    <th className="py-2 px-3 text-center text-violet-300 font-bold">MMLU-Pro</th>
+                    <th className="py-2 px-3 text-center text-violet-300 font-bold">Vals Index</th>
                     <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/40">
                   {[...results]
                     .filter(m => m.tier === 'high')
-                    .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                    .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                     .map((model, index) => {
-                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', mmlu: '-' };
+                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-' };
                       return (
                         <tr key={index} className="hover:bg-slate-800/10 transition-colors">
                           <td className="py-2.5 px-3 font-bold">
@@ -1493,7 +1499,7 @@ export default function CalculatorDashboard() {
                           <td className="py-2.5 px-3 font-mono font-bold text-white">{model.modelName}</td>
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.context}</td>
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.maxOutput}</td>
-                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-violet-300 bg-violet-500/5">{spec.mmlu}</td>
+                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-violet-300 bg-violet-500/5">{spec.valsIndex}</td>
                           <td className="py-2.5 px-3 text-right font-mono text-[10px] text-slate-300">
                             ${model.inputCostPer1M.toFixed(model.inputCostPer1M < 0.1 ? 3 : 2)} / ${model.outputCostPer1M.toFixed(2)}
                           </td>
@@ -1507,7 +1513,7 @@ export default function CalculatorDashboard() {
             <div className="mt-3.5 space-y-2 border-t border-slate-800/60 pt-3">
               {[...results]
                 .filter(m => m.tier === 'high')
-                .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                 .map((model, index) => {
                   const spec = performanceDb[model.modelName] || { features: '' };
                   return (
@@ -1541,16 +1547,16 @@ export default function CalculatorDashboard() {
                     <th className="py-2 px-3">모델명</th>
                     <th className="py-2 px-3 text-center">컨텍스트</th>
                     <th className="py-2 px-3 text-center">출력 한도</th>
-                    <th className="py-2 px-3 text-center text-emerald-300 font-bold">MMLU-Pro</th>
+                    <th className="py-2 px-3 text-center text-emerald-300 font-bold">Vals Index</th>
                     <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/40">
                   {[...results]
                     .filter(m => m.tier === 'mid')
-                    .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                    .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                     .map((model, index) => {
-                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', mmlu: '-' };
+                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-' };
                       return (
                         <tr key={index} className="hover:bg-slate-800/10 transition-colors">
                           <td className="py-2.5 px-3 font-bold">
@@ -1561,7 +1567,7 @@ export default function CalculatorDashboard() {
                           <td className="py-2.5 px-3 font-mono font-bold text-white">{model.modelName}</td>
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.context}</td>
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.maxOutput}</td>
-                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-emerald-300 bg-emerald-500/5">{spec.mmlu}</td>
+                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-emerald-300 bg-emerald-500/5">{spec.valsIndex}</td>
                           <td className="py-2.5 px-3 text-right font-mono text-[10px] text-slate-300">
                             ${model.inputCostPer1M.toFixed(model.inputCostPer1M < 0.1 ? 3 : 2)} / ${model.outputCostPer1M.toFixed(2)}
                           </td>
@@ -1575,7 +1581,7 @@ export default function CalculatorDashboard() {
             <div className="mt-3.5 space-y-2 border-t border-slate-800/60 pt-3">
               {[...results]
                 .filter(m => m.tier === 'mid')
-                .sort((a, b) => getMmluVal(b.modelName, performanceDb) - getMmluVal(a.modelName, performanceDb))
+                .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                 .map((model, index) => {
                   const spec = performanceDb[model.modelName] || { features: '' };
                   return (
@@ -1589,13 +1595,13 @@ export default function CalculatorDashboard() {
           </div>
         </div>
 
-        {/* MMLU-Pro Description Footer Note */}
+        {/* Vals Index Description Footer Note */}
         <div className="col-span-1 lg:col-span-2 text-[10px] text-slate-400 bg-slate-950/40 border border-slate-800/80 p-3.5 rounded-xl leading-relaxed flex items-start gap-2.5 shadow-md">
           <Info className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold text-slate-200">MMLU-Pro 벤치마크란?</span>
+            <span className="font-bold text-slate-200">Vals Index란?</span>
             <p className="mt-1 text-slate-400">
-              대학 학부생 수준의 다학제적 객관식 지식 평가(MMLU) 지표에 고난이도 추론, 다단계 수학적 문제 해결, 그리고 실제 코드 생성/디버깅 검증 능력을 결합하여 변별력을 극대화한 최신 종합 인공지능 지능 평가 기준입니다. 위의 스펙 표들은 MMLU-Pro의 종합 득점 백분율(%) 지수가 높은 순서대로 실시간 자동 배열됩니다.
+              Vals AI가 문서형 지식 작업, 코딩, 금융, 법률, 의료 등 여러 실무형 벤치마크를 묶어 산출하는 종합 성능 점수입니다. 위의 스펙 표들은 Vals Index 점수가 높은 순서대로 실시간 자동 배열됩니다.
             </p>
           </div>
         </div>
@@ -1611,7 +1617,7 @@ export default function CalculatorDashboard() {
             <div className="flex justify-between items-start mb-2">
               <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-indigo-400" />
-                <span>최상위(High-tier) 모델 최근 1개월 가격 추이</span>
+                <span>최상위(High-tier) 모델 최근 6개월 가격 추이</span>
               </h2>
               <span className="text-[9px] text-indigo-300 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 font-mono">
                 USD / 1M Input
@@ -1661,7 +1667,7 @@ export default function CalculatorDashboard() {
                 <Line 
                   type="monotone" 
                   dataKey="OpenAI" 
-                  name={selectedOpenAIHighModelName}
+                  name={getModelNameByTier('OpenAI', 'high')}
                   stroke="#10b981" 
                   strokeWidth={2.5}
                   dot={{ r: 3, strokeWidth: 1.5 }}
@@ -1670,7 +1676,7 @@ export default function CalculatorDashboard() {
                 <Line 
                   type="monotone" 
                   dataKey="Anthropic" 
-                  name={selectedAnthropicHighModelName}
+                  name={getModelNameByTier('Anthropic', 'high')}
                   stroke="#f59e0b" 
                   strokeWidth={2.5}
                   dot={{ r: 3, strokeWidth: 1.5 }}
@@ -1696,7 +1702,7 @@ export default function CalculatorDashboard() {
             <div className="flex justify-between items-start mb-2">
               <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-emerald-400" />
-                <span>가성비(Mid-tier) 모델 최근 1개월 가격 추이</span>
+                <span>가성비(Mid-tier) 모델 최근 6개월 가격 추이</span>
               </h2>
               <span className="text-[9px] text-emerald-300 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
                 USD / 1M Input
@@ -1796,7 +1802,7 @@ export default function CalculatorDashboard() {
               <span className="font-bold text-slate-200">OpenAI (GPT 시리즈)</span>
             </div>
             <div className="space-y-3">
-              {newsEvents.OpenAI.slice(0, 3).map((item, idx) => (
+              {newsEvents.OpenAI.map((item, idx) => (
                 <div key={idx} className="flex flex-col gap-1">
                   <span className={`text-[10px] font-semibold ${idx === 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
                     {item.date} {idx === 0 && '(최근)'}
@@ -1817,7 +1823,7 @@ export default function CalculatorDashboard() {
               <span className="font-bold text-slate-200">Anthropic (Claude 시리즈)</span>
             </div>
             <div className="space-y-3">
-              {newsEvents.Anthropic.slice(0, 3).map((item, idx) => (
+              {newsEvents.Anthropic.map((item, idx) => (
                 <div key={idx} className="flex flex-col gap-1">
                   <span className={`text-[10px] font-semibold ${idx === 0 ? 'text-amber-400' : 'text-slate-500'}`}>
                     {item.date} {idx === 0 && '(최근)'}
@@ -1838,7 +1844,7 @@ export default function CalculatorDashboard() {
               <span className="font-bold text-slate-200">Google (Gemini 시리즈)</span>
             </div>
             <div className="space-y-3">
-              {newsEvents.Google.slice(0, 3).map((item, idx) => (
+              {newsEvents.Google.map((item, idx) => (
                 <div key={idx} className="flex flex-col gap-1">
                   <span className={`text-[10px] font-semibold ${idx === 0 ? 'text-blue-400' : 'text-slate-500'}`}>
                     {item.date} {idx === 0 && '(최근)'}
