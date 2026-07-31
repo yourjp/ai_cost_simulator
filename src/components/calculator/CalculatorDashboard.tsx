@@ -368,7 +368,7 @@ export default function CalculatorDashboard() {
             </div>
 
             {/* Exchange Rate Input */}
-            <div className="mb-5">
+            <div>
               <label htmlFor="exchange-rate" className="block text-slate-400 text-xs font-semibold mb-2 uppercase tracking-wider">
                 달러 환율 (KRW/USD)
               </label>
@@ -382,25 +382,6 @@ export default function CalculatorDashboard() {
                   value={formatComma(exchangeRate)}
                   onChange={(e) => setExchangeRate(Math.max(1, parseComma(e.target.value)))}
                   className="block w-full pl-10 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-semibold"
-                />
-              </div>
-            </div>
-
-            {/* Developer Ratio Input (Added) */}
-            <div>
-              <label htmlFor="developer-ratio" className="block text-slate-400 text-xs font-semibold mb-2 uppercase tracking-wider">
-                개발자 비율 (%)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <GitCompare className="h-5 w-5 text-slate-500" />
-                </div>
-                <input
-                  id="developer-ratio"
-                  type="text"
-                  value={formatComma(developerRatio)}
-                  onChange={(e) => handleDeveloperRatioChange(parseComma(e.target.value))}
-                  className="block w-full pl-10 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-semibold font-mono"
                 />
               </div>
             </div>
@@ -418,9 +399,42 @@ export default function CalculatorDashboard() {
               </span>
             </div>
 
-            <p className="text-slate-400 text-xs mb-6 leading-relaxed">
+            <p className="text-slate-400 text-xs mb-5 leading-relaxed">
               임의의 3가지 값을 조작하면, UI-State-Agent가 나머지 1가지 비율을 최적화하여 자동으로 총합 100%를 보정합니다.
             </p>
+
+            {/* Master Developer Ratio Controller */}
+            <div className="mb-6 pb-6 border-b border-slate-850 bg-indigo-500/5 -mx-6 px-6 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-indigo-300 flex items-center gap-1.5">
+                    <GitCompare className="w-4 h-4" />
+                    <span>개발자 총합 비율</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500">개발 유저 + 헤비개발 유저의 비중 합계</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={formatComma(Math.round(totalUsers * (developerRatio / 100)))}
+                    onChange={(e) => handleDeveloperRatioChange(Math.round((parseComma(e.target.value) / totalUsers) * 100))}
+                    className="w-20 px-1.5 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  <span className="text-slate-500 text-xs">명</span>
+                  <span className="text-indigo-400 text-xs font-bold font-mono ml-1">
+                    ({developerRatio}%)
+                  </span>
+                </div>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={developerRatio}
+                onChange={(e) => handleDeveloperRatioChange(parseInt(e.target.value, 10))}
+                className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              />
+            </div>
 
             {/* Proportions Sliders */}
             <div className="space-y-6">
