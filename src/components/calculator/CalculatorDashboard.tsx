@@ -51,38 +51,64 @@ export default function CalculatorDashboard() {
   // OpenAI selected high-tier model choice ('GPT-5.6 Sol' vs 'GPT-5.6 Terra')
   const [selectedOpenAIHighModelName, setSelectedOpenAIHighModelName] = useState<string>('GPT-5.6 Sol');
 
+  // Anthropic selected high-tier model choice ('Claude 3 Opus' vs 'Claude 3.5 Sonnet')
+  const [selectedAnthropicHighModelName, setSelectedAnthropicHighModelName] = useState<string>('Claude 3 Opus');
+
   // Filter pricingData to only include the active models
   const filteredPricingData = pricingData.filter(model => {
     if (model.provider === 'OpenAI' && model.tier === 'high') {
       return model.modelName === selectedOpenAIHighModelName;
+    }
+    if (model.provider === 'Anthropic' && model.tier === 'high') {
+      return model.modelName === selectedAnthropicHighModelName;
     }
     return true;
   });
 
   // 1주일 단위 3사 최상위 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
   const flagshipHistoryData = [
-    { week: '07/03', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 7.00 },
-    { week: '07/10', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 7.00 },
-    { week: '07/17', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 1.25 }, // Google 1.5 Pro 가격 인하 시점
-    { week: '07/24', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 1.25 },
+    { 
+      week: '07/03', 
+      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Google: 7.00 
+    },
+    { 
+      week: '07/10', 
+      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Google: 7.00 
+    },
+    { 
+      week: '07/17', 
+      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Google: 1.25 
+    }, // Google 1.5 Pro 가격 인하 시점
+    { 
+      week: '07/24', 
+      OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, 
+      Anthropic: selectedAnthropicHighModelName === 'Claude 3.5 Sonnet' ? 3.00 : 15.00, 
+      Google: 1.25 
+    },
     { 
       week: '07/31(현재)', 
       OpenAI: filteredPricingData.find(m => m.provider === 'OpenAI' && m.tier === 'high')?.inputCostPer1M ?? 5.00, 
-      Anthropic: 15.00, 
+      Anthropic: filteredPricingData.find(m => m.provider === 'Anthropic' && m.tier === 'high')?.inputCostPer1M ?? 15.00, 
       Google: 1.25 
     }
   ];
 
   // 1주일 단위 3사 가성비 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
   const budgetHistoryData = [
-    { week: '07/03', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
-    { week: '07/10', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
-    { week: '07/17', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
-    { week: '07/24', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
+    { week: '07/03', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
+    { week: '07/10', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
+    { week: '07/17', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
+    { week: '07/24', OpenAI: 1.00, Anthropic: 0.25, Google: 0.075 },
     { 
       week: '07/31(현재)', 
       OpenAI: filteredPricingData.find(m => m.provider === 'OpenAI' && m.tier === 'mid')?.inputCostPer1M ?? 0.20, 
-      Anthropic: 3.00, 
+      Anthropic: filteredPricingData.find(m => m.provider === 'Anthropic' && m.tier === 'mid')?.inputCostPer1M ?? 0.25, 
       Google: 0.075 
     }
   ];
@@ -123,16 +149,16 @@ export default function CalculatorDashboard() {
       {
         date: '2024-10-22',
         isRecent: false,
-        title: 'Claude 3.5 Sonnet (New) 공식 출시',
+        title: 'Claude 3.5 Sonnet 공식 출시',
         price: '$3.00 / $15.00',
         desc: '추론 효율 극대화 및 토큰 단가 대비 가성비 효율성 극대화'
       },
       {
         date: '2024-03-04',
         isRecent: false,
-        title: '최상위 Claude 3 Opus 최초 출시',
-        price: '$15.00 / $75.00',
-        desc: '이후 차세대 예측 Opus ($5.00 / $25.00) 모델 출시 예정으로 최상위 단가 67% 인하 추세'
+        title: '최상위 Claude 3 Opus & Haiku 공식 출시',
+        price: 'Opus $15.00, Haiku $0.25',
+        desc: 'Anthropic 플래그십 핵심 엔진 및 초저가 경량형 가성비 에이전트 동시 론칭'
       }
     ],
     Google: [
@@ -797,8 +823,22 @@ export default function CalculatorDashboard() {
                   </div>
                 </div>
 
+                {/* Anthropic High-tier model Select Box */}
+                <div className="mb-2.5 flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800/40 px-2 py-1.5 rounded-lg text-xs">
+                  <label htmlFor="claude-high-model" className="text-slate-400 font-semibold text-[10px] uppercase">최상위 모델 선택</label>
+                  <select
+                    id="claude-high-model"
+                    value={selectedAnthropicHighModelName}
+                    onChange={(e) => setSelectedAnthropicHighModelName(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-[11px]"
+                  >
+                    <option value="Claude 3 Opus">Claude 3 Opus ($15.00/$75.00)</option>
+                    <option value="Claude 3.5 Sonnet">Claude 3.5 Sonnet ($3.00/$15.00)</option>
+                  </select>
+                </div>
+
                 <div className="text-[10px] text-slate-500 mb-3">
-                  {getModelNameByTier('Anthropic', 'high')} vs {getModelNameByTier('Anthropic', 'mid')}
+                  {selectedAnthropicHighModelName} vs {getModelNameByTier('Anthropic', 'mid')}
                 </div>
                 <input
                   type="range"
@@ -1346,7 +1386,7 @@ export default function CalculatorDashboard() {
                 <Line 
                   type="monotone" 
                   dataKey="Anthropic" 
-                  name="Claude 3 Opus"
+                  name={selectedAnthropicHighModelName}
                   stroke="#f59e0b" 
                   strokeWidth={2.5}
                   dot={{ r: 3, strokeWidth: 1.5 }}
@@ -1431,7 +1471,7 @@ export default function CalculatorDashboard() {
                 <Line 
                   type="monotone" 
                   dataKey="Anthropic" 
-                  name="Claude 3.5 Sonnet"
+                  name="Claude 3 Haiku"
                   stroke="#f59e0b" 
                   strokeWidth={2.5}
                   dot={{ r: 3, strokeWidth: 1.5 }}
