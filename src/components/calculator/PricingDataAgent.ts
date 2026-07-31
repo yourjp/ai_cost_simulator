@@ -7,6 +7,7 @@ export interface ModelPricing {
 }
 
 export const FALLBACK_PRICING: ModelPricing[] = [
+  // 3사 대표 실거래 단가
   {
     modelName: 'GPT-5.6 Sol',
     provider: 'OpenAI',
@@ -15,46 +16,46 @@ export const FALLBACK_PRICING: ModelPricing[] = [
     outputCostPer1M: 30.00
   },
   {
-    modelName: 'GPT-5.6 Luna',
+    modelName: 'GPT-5.6 Terra',
     provider: 'OpenAI',
-    tier: 'mid',
-    inputCostPer1M: 1.00,
-    outputCostPer1M: 6.00
-  },
-  {
-    modelName: 'Claude 4.8 Opus',
-    provider: 'Anthropic',
-    tier: 'high',
-    inputCostPer1M: 5.00,
-    outputCostPer1M: 25.00
-  },
-  {
-    modelName: 'Claude Fable 5',
-    provider: 'Anthropic',
-    tier: 'high',
-    inputCostPer1M: 10.00,
-    outputCostPer1M: 50.00
-  },
-  {
-    modelName: 'Claude Sonnet 5',
-    provider: 'Anthropic',
-    tier: 'mid',
-    inputCostPer1M: 2.00,
-    outputCostPer1M: 10.00
-  },
-  {
-    modelName: 'Gemini 3.1 Pro (Preview)',
-    provider: 'Google',
     tier: 'high',
     inputCostPer1M: 2.00,
     outputCostPer1M: 12.00
   },
   {
-    modelName: 'Gemini 3.6 Flash',
+    modelName: 'GPT-5.6 Luna',
+    provider: 'OpenAI',
+    tier: 'mid',
+    inputCostPer1M: 0.20,
+    outputCostPer1M: 1.20
+  },
+  {
+    modelName: 'Claude 3 Opus',
+    provider: 'Anthropic',
+    tier: 'high',
+    inputCostPer1M: 15.00,
+    outputCostPer1M: 75.00
+  },
+  {
+    modelName: 'Claude 3.5 Sonnet',
+    provider: 'Anthropic',
+    tier: 'mid',
+    inputCostPer1M: 3.00,
+    outputCostPer1M: 15.00
+  },
+  {
+    modelName: 'Gemini 1.5 Pro',
+    provider: 'Google',
+    tier: 'high',
+    inputCostPer1M: 1.25,
+    outputCostPer1M: 5.00
+  },
+  {
+    modelName: 'Gemini 1.5 Flash',
     provider: 'Google',
     tier: 'mid',
-    inputCostPer1M: 1.50,
-    outputCostPer1M: 7.50
+    inputCostPer1M: 0.075,
+    outputCostPer1M: 0.30
   }
 ];
 

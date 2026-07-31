@@ -4,11 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { UIStateAgent, UserRatioState, UserType, ProviderMixState, ModelMixRatio } from './UIStateAgent';
 import { PricingDataAgent, ModelPricing, FALLBACK_PRICING } from './PricingDataAgent';
 import { SimulationEngineAgent, DEFAULT_TOKEN_USAGE, UserTokenUsage } from './SimulationEngineAgent';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
-import { Users, DollarSign, RefreshCw, Layers, Award, Sparkles, TrendingUp, Info, GitCompare } from 'lucide-react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, LabelList } from 'recharts';
+import { Users, DollarSign, RefreshCw, Layers, Award, Sparkles, TrendingUp, TrendingDown, Info, GitCompare } from 'lucide-react';
 
 export default function CalculatorDashboard() {
   const [mounted, setMounted] = useState(false);
+
+
+
   const [totalUsers, setTotalUsers] = useState<number>(1000);
   const [exchangeRate, setExchangeRate] = useState<number>(1500);
   const [currencyMode, setCurrencyMode] = useState<'USD' | 'KRW'>('USD');
@@ -16,15 +19,15 @@ export default function CalculatorDashboard() {
 
   // ratios & history states for UI-State-Agent (user cohorts)
   const [ratios, setRatios] = useState<UserRatioState>({
-    light: 50,
+    light: 60,
     heavy: 20,
-    stdDev: 20,
-    heavyDev: 10,
+    stdDev: 15,
+    heavyDev: 5,
   });
   const [history, setHistory] = useState<UserType[]>(['light', 'heavy', 'stdDev', 'heavyDev']);
 
   // Developer ratio state (sum of stdDev and heavyDev) and automatic synchronizer
-  const [developerRatio, setDeveloperRatio] = useState<number>(30);
+  const [developerRatio, setDeveloperRatio] = useState<number>(20);
   
   useEffect(() => {
     setDeveloperRatio(ratios.stdDev + ratios.heavyDev);
@@ -45,19 +48,132 @@ export default function CalculatorDashboard() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Anthropic selected high-tier model choice ('Claude 4.8 Opus' vs 'Claude Fable 5')
-  const [selectedAnthropicHighModelName, setSelectedAnthropicHighModelName] = useState<string>('Claude 4.8 Opus');
+  // OpenAI selected high-tier model choice ('GPT-5.6 Sol' vs 'GPT-5.6 Terra')
+  const [selectedOpenAIHighModelName, setSelectedOpenAIHighModelName] = useState<string>('GPT-5.6 Sol');
 
-  // Filter pricingData to only include the active Anthropic high-tier model selected by the user
+  // Filter pricingData to only include the active models
   const filteredPricingData = pricingData.filter(model => {
-    if (model.provider === 'Anthropic' && model.tier === 'high') {
-      return model.modelName === selectedAnthropicHighModelName;
+    if (model.provider === 'OpenAI' && model.tier === 'high') {
+      return model.modelName === selectedOpenAIHighModelName;
     }
     return true;
   });
 
+  // 1주일 단위 3사 최상위 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
+  const flagshipHistoryData = [
+    { week: '07/03', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 7.00 },
+    { week: '07/10', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 7.00 },
+    { week: '07/17', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 1.25 }, // Google 1.5 Pro 가격 인하 시점
+    { week: '07/24', OpenAI: selectedOpenAIHighModelName === 'GPT-5.6 Terra' ? 2.50 : 5.00, Anthropic: 15.00, Google: 1.25 },
+    { 
+      week: '07/31(현재)', 
+      OpenAI: filteredPricingData.find(m => m.provider === 'OpenAI' && m.tier === 'high')?.inputCostPer1M ?? 5.00, 
+      Anthropic: 15.00, 
+      Google: 1.25 
+    }
+  ];
+
+  // 1주일 단위 3사 가성비 기존 모델 Input 토큰 가격 추세 데이터 (최근 1개월 / 1M 토큰당 USD)
+  const budgetHistoryData = [
+    { week: '07/03', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
+    { week: '07/10', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
+    { week: '07/17', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
+    { week: '07/24', OpenAI: 1.00, Anthropic: 3.00, Google: 0.075 },
+    { 
+      week: '07/31(현재)', 
+      OpenAI: filteredPricingData.find(m => m.provider === 'OpenAI' && m.tier === 'mid')?.inputCostPer1M ?? 0.20, 
+      Anthropic: 3.00, 
+      Google: 0.075 
+    }
+  ];
+
+  // 3사 요금/출시 변동 히스토리 뉴스 데이터 (최신 3개만 슬라이스 노출 보장)
+  const providerNewsEvents = {
+    OpenAI: [
+      {
+        date: '2026-07-30',
+        isRecent: true,
+        title: 'GPT-5.6 Luna & Terra 단가 대폭 인하',
+        price: 'Luna $0.20, Terra $2.00',
+        desc: 'Luna 80% 인하 ($1.00 ➡️ $0.20) 및 Terra 20% 인하 ($2.50 ➡️ $2.00) 적용'
+      },
+      {
+        date: '2024-07-18',
+        isRecent: false,
+        title: 'GPT-5.6 Luna 공식 출시',
+        price: '$1.00 / $6.00',
+        desc: 'GPT-5.6 패밀리의 엔트리급 저가형 토큰 모델 론칭'
+      },
+      {
+        date: '2024-05-13',
+        isRecent: false,
+        title: '최상위 GPT-5.6 Sol 최초 출시',
+        price: '$5.00 / $30.00',
+        desc: 'OpenAI 플래그십 핵심 지능 엔진 출시 및 단가 기준선 설정'
+      }
+    ],
+    Anthropic: [
+      {
+        date: '2025-08-01',
+        isRecent: true,
+        title: '프롬프트 캐싱 (Prompt Caching) 기능 공식 출시',
+        price: 'hit 시 입력 단가 90% 할인 (hit $0.20 / $0.30)',
+        desc: '중복 지시문 재입력 시 입력 비용 최대 90% 상시 할인'
+      },
+      {
+        date: '2024-10-22',
+        isRecent: false,
+        title: 'Claude 3.5 Sonnet (New) 공식 출시',
+        price: '$3.00 / $15.00',
+        desc: '추론 효율 극대화 및 토큰 단가 대비 가성비 효율성 극대화'
+      },
+      {
+        date: '2024-03-04',
+        isRecent: false,
+        title: '최상위 Claude 3 Opus 최초 출시',
+        price: '$15.00 / $75.00',
+        desc: '이후 차세대 예측 Opus ($5.00 / $25.00) 모델 출시 예정으로 최상위 단가 67% 인하 추세'
+      }
+    ],
+    Google: [
+      {
+        date: '2025-09-01',
+        isRecent: true,
+        title: 'Gemini 1.5 계열 단가 개편 및 가격 파괴 선언',
+        price: 'Pro $1.25 / $5.00, Flash $0.075 / $0.30',
+        desc: 'Pro 및 Flash 입력 비용 파격 인하로 업계 최저가 갱신 단행'
+      },
+      {
+        date: '2024-05-14',
+        isRecent: false,
+        title: 'Gemini 1.5 Flash 공식 출시',
+        price: '$0.075 / $0.30',
+        desc: '경량형 모델 라인의 가격 한계 돌파 및 대용량 지원'
+      },
+      {
+        date: '2024-02-15',
+        isRecent: false,
+        title: '최상위 Gemini 1.5 Pro 최초 출시',
+        price: '$7.00 / $21.00',
+        desc: '출시가 ($7.00 / $21.00)에서 이후 ($1.25 / $5.00)로 단가 82% 대폭 인하 및 차세대 Pro ($2.00 / $12.00)'
+      }
+    ]
+  };
+
   // Dynamic user token usages state
   const [tokenUsage, setTokenUsage] = useState<Record<UserType, UserTokenUsage>>(DEFAULT_TOKEN_USAGE);
+
+  // Text buffer input cache for typing token numbers in 'k' units seamlessly
+  const [tokenInputCache, setTokenInputCache] = useState<Record<string, string>>({
+    'light-inputTokens': '300',
+    'light-outputTokens': '75',
+    'heavy-inputTokens': '1,500',
+    'heavy-outputTokens': '400',
+    'stdDev-inputTokens': '5,000',
+    'stdDev-outputTokens': '1,000',
+    'heavyDev-inputTokens': '20,000',
+    'heavyDev-outputTokens': '4,000'
+  });
 
   // Initialize and Fetch price constants / API simulation
   useEffect(() => {
@@ -118,14 +234,31 @@ export default function CalculatorDashboard() {
     setRatios(newRatios);
   };
 
-  const handleTokenUsageChange = (type: UserType, field: 'inputTokens' | 'outputTokens', value: number) => {
-    setTokenUsage({
-      ...tokenUsage,
-      [type]: {
-        ...tokenUsage[type],
-        [field]: Math.max(0, value)
-      }
-    });
+  const handleTokenInputChange = (type: UserType, field: 'inputTokens' | 'outputTokens', rawValue: string) => {
+    const cacheKey = `${type}-${field}`;
+    setTokenInputCache(prev => ({ ...prev, [cacheKey]: rawValue }));
+
+    const cleanVal = rawValue.replace(/,/g, '');
+    const parsed = parseInt(cleanVal, 10);
+    
+    if (!isNaN(parsed) && parsed >= 0) {
+      setTokenUsage(prev => ({
+        ...prev,
+        [type]: {
+          ...prev[type],
+          [field]: parsed * 1000
+        }
+      }));
+    }
+  };
+
+  const handleTokenInputBlur = (type: UserType, field: 'inputTokens' | 'outputTokens') => {
+    const cacheKey = `${type}-${field}`;
+    const currentValue = tokenUsage[type][field] / 1000;
+    setTokenInputCache(prev => ({
+      ...prev,
+      [cacheKey]: formatComma(currentValue)
+    }));
   };
 
   const formatComma = (num: number) => {
@@ -136,6 +269,15 @@ export default function CalculatorDashboard() {
   const parseComma = (str: string) => {
     const cleanStr = str.replace(/,/g, '');
     return parseInt(cleanStr, 10) || 0;
+  };
+
+  const formatKoreanTokenCount = (tokens: number) => {
+    if (tokens === undefined || tokens === null || isNaN(tokens)) return '0';
+    if (tokens >= 10000) {
+      const val = tokens / 10000;
+      return `${Number(val.toFixed(1))}만`;
+    }
+    return `${tokens}`;
   };
 
   const handleMixRatioChange = (provider: 'OpenAI' | 'Anthropic' | 'Google', tier: 'high' | 'mid', value: number) => {
@@ -318,6 +460,7 @@ export default function CalculatorDashboard() {
             <span>최근 업데이트: 2026-07-29</span>
           </div>
           <div className="flex items-center gap-3">
+
             <button
               onClick={handleForceFetch}
               disabled={loading}
@@ -436,130 +579,136 @@ export default function CalculatorDashboard() {
               />
             </div>
 
-            {/* Proportions Sliders */}
-            <div className="space-y-6">
-              {/* 1. Light User */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-slate-200">일반 유저 (Light User)</span>
-                    <span className="text-[10px] text-slate-400">월 Input 30만 / Output 7.5만 토큰</span>
+            {/* Proportions Sliders (2 Columns Layout) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Non-Developer Cohorts */}
+              <div className="space-y-6">
+                {/* 1. Light User */}
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-200">일반 유저 (Light User)</span>
+                      <span className="text-[10px] text-slate-400">월 Input {formatKoreanTokenCount(tokenUsage.light.inputTokens)} / Output {formatKoreanTokenCount(tokenUsage.light.outputTokens)} 토큰</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={formatComma(Math.round(totalUsers * (ratios.light / 100)))}
+                        onChange={(e) => handleCountChange('light', parseComma(e.target.value))}
+                        className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-400 text-xs font-semibold">명</span>
+                      <span className="text-emerald-400 text-xs font-bold font-mono ml-1">
+                        ({ratios.light}%)
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={formatComma(Math.round(totalUsers * (ratios.light / 100)))}
-                      onChange={(e) => handleCountChange('light', parseComma(e.target.value))}
-                      className="w-20 px-1.5 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                    <span className="text-slate-400 text-sm font-semibold">명</span>
-                    <span className="text-emerald-400 text-xs font-bold font-mono ml-1">
-                      ({ratios.light}%)
-                    </span>
-                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={ratios.light}
+                    onChange={(e) => handleRatioChange('light', parseFloat(e.target.value))}
+                    className="w-full accent-emerald-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={ratios.light}
-                  onChange={(e) => handleRatioChange('light', parseFloat(e.target.value))}
-                  className="w-full accent-emerald-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
-                />
+
+                {/* 2. Heavy User */}
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-200">헤비 유저 (Heavy User)</span>
+                      <span className="text-[10px] text-slate-400">월 Input {formatKoreanTokenCount(tokenUsage.heavy.inputTokens)} / Output {formatKoreanTokenCount(tokenUsage.heavy.outputTokens)} 토큰</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={formatComma(Math.round(totalUsers * (ratios.heavy / 100)))}
+                        onChange={(e) => handleCountChange('heavy', parseComma(e.target.value))}
+                        className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-400 text-xs font-semibold">명</span>
+                      <span className="text-amber-400 text-xs font-bold font-mono ml-1">
+                        ({ratios.heavy}%)
+                      </span>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={ratios.heavy}
+                    onChange={(e) => handleRatioChange('heavy', parseFloat(e.target.value))}
+                    className="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
+                  />
+                </div>
               </div>
 
-              {/* 2. Heavy User */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-slate-200">헤비 유저 (Heavy User)</span>
-                    <span className="text-[10px] text-slate-400">월 Input 150만 / Output 40만 토큰</span>
+              {/* Right Column: Developer Cohorts */}
+              <div className="space-y-6">
+                {/* 3. Standard Developer */}
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-200">일반 개발자 (Standard Dev)</span>
+                      <span className="text-[10px] text-slate-400">월 Input {formatKoreanTokenCount(tokenUsage.stdDev.inputTokens)} / Output {formatKoreanTokenCount(tokenUsage.stdDev.outputTokens)} 토큰</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={formatComma(Math.round(totalUsers * (ratios.stdDev / 100)))}
+                        onChange={(e) => handleCountChange('stdDev', parseComma(e.target.value))}
+                        className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-400 text-xs font-semibold">명</span>
+                      <span className="text-blue-400 text-xs font-bold font-mono ml-1">
+                        ({ratios.stdDev}%)
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={formatComma(Math.round(totalUsers * (ratios.heavy / 100)))}
-                      onChange={(e) => handleCountChange('heavy', parseComma(e.target.value))}
-                      className="w-20 px-1.5 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                    <span className="text-slate-400 text-sm font-semibold">명</span>
-                    <span className="text-amber-400 text-xs font-bold font-mono ml-1">
-                      ({ratios.heavy}%)
-                    </span>
-                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={ratios.stdDev}
+                    onChange={(e) => handleRatioChange('stdDev', parseFloat(e.target.value))}
+                    className="w-full accent-blue-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={ratios.heavy}
-                  onChange={(e) => handleRatioChange('heavy', parseFloat(e.target.value))}
-                  className="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
-                />
-              </div>
 
-              {/* 3. Standard Developer */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-slate-200">일반 개발자 (Standard Dev)</span>
-                    <span className="text-[10px] text-slate-400">월 Input 500만 / Output 100만 토큰</span>
+                {/* 4. Heavy Developer */}
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-200">헤비 개발자 (Heavy Dev)</span>
+                      <span className="text-[10px] text-slate-400">월 Input {formatKoreanTokenCount(tokenUsage.heavyDev.inputTokens)} / Output {formatKoreanTokenCount(tokenUsage.heavyDev.outputTokens)} 토큰</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={formatComma(Math.round(totalUsers * (ratios.heavyDev / 100)))}
+                        onChange={(e) => handleCountChange('heavyDev', parseComma(e.target.value))}
+                        className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-400 text-xs font-semibold">명</span>
+                      <span className="text-purple-400 text-xs font-bold font-mono ml-1">
+                        ({ratios.heavyDev}%)
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={formatComma(Math.round(totalUsers * (ratios.stdDev / 100)))}
-                      onChange={(e) => handleCountChange('stdDev', parseComma(e.target.value))}
-                      className="w-20 px-1.5 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                    <span className="text-slate-400 text-sm font-semibold">명</span>
-                    <span className="text-blue-400 text-xs font-bold font-mono ml-1">
-                      ({ratios.stdDev}%)
-                    </span>
-                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={ratios.heavyDev}
+                    onChange={(e) => handleRatioChange('heavyDev', parseFloat(e.target.value))}
+                    className="w-full accent-purple-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={ratios.stdDev}
-                  onChange={(e) => handleRatioChange('stdDev', parseFloat(e.target.value))}
-                  className="w-full accent-blue-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
-                />
-              </div>
-
-              {/* 4. Heavy Developer */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-slate-200">헤비 개발자 (Heavy Dev)</span>
-                    <span className="text-[10px] text-slate-400">월 Input 2000만 / Output 400만 토큰</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={formatComma(Math.round(totalUsers * (ratios.heavyDev / 100)))}
-                      onChange={(e) => handleCountChange('heavyDev', parseComma(e.target.value))}
-                      className="w-20 px-1.5 py-0.5 text-right bg-slate-950 border border-slate-800 rounded text-slate-300 font-semibold font-mono text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                    <span className="text-slate-400 text-sm font-semibold">명</span>
-                    <span className="text-purple-400 text-xs font-bold font-mono ml-1">
-                      ({ratios.heavyDev}%)
-                    </span>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={ratios.heavyDev}
-                  onChange={(e) => handleRatioChange('heavyDev', parseFloat(e.target.value))}
-                  className="w-full accent-purple-500 bg-slate-950 rounded-lg cursor-pointer h-1.5"
-                />
               </div>
             </div>
           </div>
@@ -610,8 +759,23 @@ export default function CalculatorDashboard() {
                     <span>가성비: {mixRatios.OpenAI.mid}%</span>
                   </div>
                 </div>
+
+                {/* OpenAI High-tier model Select Box */}
+                <div className="mb-2.5 flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800/40 px-2 py-1.5 rounded-lg text-xs">
+                  <label htmlFor="openai-high-model" className="text-slate-400 font-semibold text-[10px] uppercase">최상위 모델 선택</label>
+                  <select
+                    id="openai-high-model"
+                    value={selectedOpenAIHighModelName}
+                    onChange={(e) => setSelectedOpenAIHighModelName(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-[11px]"
+                  >
+                    <option value="GPT-5.6 Sol">GPT-5.6 Sol ($5.00/$30.00)</option>
+                    <option value="GPT-5.6 Terra">GPT-5.6 Terra ($2.00/$12.00)</option>
+                  </select>
+                </div>
+
                 <div className="text-[10px] text-slate-500 mb-3">
-                  {getModelNameByTier('OpenAI', 'high')} vs {getModelNameByTier('OpenAI', 'mid')}
+                  {selectedOpenAIHighModelName} vs {getModelNameByTier('OpenAI', 'mid')}
                 </div>
                 <input
                   type="range"
@@ -633,22 +797,8 @@ export default function CalculatorDashboard() {
                   </div>
                 </div>
 
-                {/* Claude High-tier model Select Box */}
-                <div className="mb-2.5 flex items-center justify-between gap-2 bg-slate-900/60 border border-slate-800/40 px-2 py-1.5 rounded-lg text-xs">
-                  <label htmlFor="claude-high-model" className="text-slate-400 font-semibold text-[10px] uppercase">최상위 모델 선택</label>
-                  <select
-                    id="claude-high-model"
-                    value={selectedAnthropicHighModelName}
-                    onChange={(e) => setSelectedAnthropicHighModelName(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-[11px]"
-                  >
-                    <option value="Claude 4.8 Opus">Claude 4.8 Opus ($5/$25)</option>
-                    <option value="Claude Fable 5">Claude Fable 5 ($10/$50)</option>
-                  </select>
-                </div>
-
                 <div className="text-[10px] text-slate-500 mb-3">
-                  {selectedAnthropicHighModelName} vs {getModelNameByTier('Anthropic', 'mid')}
+                  {getModelNameByTier('Anthropic', 'high')} vs {getModelNameByTier('Anthropic', 'mid')}
                 </div>
                 <input
                   type="range"
@@ -901,6 +1051,7 @@ export default function CalculatorDashboard() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               {/* Light User */}
+              {/* Light User */}
               <div className="flex flex-col gap-2 p-3 bg-slate-950/40 border border-slate-800/50 rounded-xl hover:border-indigo-500/10 transition-all duration-200">
                 <span className="font-semibold text-emerald-400">일반 유저 (Light User)</span>
                 <div className="flex flex-col gap-1.5 text-[10px]">
@@ -908,8 +1059,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Input 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.light.inputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('light', 'inputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['light-inputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('light', 'inputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('light', 'inputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -917,8 +1069,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Output 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.light.outputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('light', 'outputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['light-outputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('light', 'outputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('light', 'outputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -933,8 +1086,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Input 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.heavy.inputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('heavy', 'inputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['heavy-inputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('heavy', 'inputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('heavy', 'inputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -942,8 +1096,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Output 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.heavy.outputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('heavy', 'outputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['heavy-outputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('heavy', 'outputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('heavy', 'outputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -958,8 +1113,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Input 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.stdDev.inputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('stdDev', 'inputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['stdDev-inputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('stdDev', 'inputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('stdDev', 'inputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -967,8 +1123,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Output 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.stdDev.outputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('stdDev', 'outputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['stdDev-outputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('stdDev', 'outputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('stdDev', 'outputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -983,8 +1140,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Input 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.heavyDev.inputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('heavyDev', 'inputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['heavyDev-inputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('heavyDev', 'inputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('heavyDev', 'inputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -992,8 +1150,9 @@ export default function CalculatorDashboard() {
                     <label className="block text-slate-500 mb-0.5 font-medium">Output 토큰 수 (k)</label>
                     <input
                       type="text"
-                      value={formatComma(tokenUsage.heavyDev.outputTokens / 1000)}
-                      onChange={(e) => handleTokenUsageChange('heavyDev', 'outputTokens', parseComma(e.target.value) * 1000)}
+                      value={tokenInputCache['heavyDev-outputTokens'] || ''}
+                      onChange={(e) => handleTokenInputChange('heavyDev', 'outputTokens', e.target.value)}
+                      onBlur={() => handleTokenInputBlur('heavyDev', 'outputTokens')}
                       className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-slate-100 font-bold font-mono text-lg text-right focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
@@ -1116,6 +1275,258 @@ export default function CalculatorDashboard() {
                 ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* 5.5. AI Model Pricing Trend Analysis (Added: Dual 2-Column charts for Flagship & Budget) */}
+      <section className="max-w-7xl mx-auto mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Flagship (High-tier) Chart */}
+        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-2">
+              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
+                <TrendingDown className="w-4 h-4 text-indigo-400" />
+                <span>최상위(High-tier) 모델 최근 1개월 가격 추이</span>
+              </h2>
+              <span className="text-[9px] text-indigo-300 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 font-mono">
+                USD / 1M Input
+              </span>
+            </div>
+            <p className="text-slate-400 text-[11px] mb-4">
+              과거 1개월 전(07/03)부터 현재(07/31)까지의 주요 3사 최상위 플래그십 단가 변동 흐름
+            </p>
+          </div>
+          
+          <div className="h-64 w-full bg-slate-950/20 border border-slate-800/40 rounded-xl p-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={flagshipHistoryData}
+                margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.4} />
+                <XAxis 
+                  dataKey="week" 
+                  stroke="#64748b" 
+                  fontSize={10}
+                  tickLine={false}
+                />
+                <YAxis 
+                  stroke="#64748b" 
+                  fontSize={10}
+                  tickFormatter={(value) => `$${value}`}
+                  domain={[0, 16]}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#0f172a', 
+                    borderColor: '#1e293b',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    fontSize: '11px',
+                    fontFamily: 'monospace'
+                  }}
+                  formatter={(value: any) => [`$${value.toFixed(2)}`, '']}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                  verticalAlign="bottom"
+                  align="center"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="OpenAI" 
+                  name={selectedOpenAIHighModelName}
+                  stroke="#10b981" 
+                  strokeWidth={2.5}
+                  dot={{ r: 3, strokeWidth: 1.5 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Anthropic" 
+                  name="Claude 3 Opus"
+                  stroke="#f59e0b" 
+                  strokeWidth={2.5}
+                  dot={{ r: 3, strokeWidth: 1.5 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Google" 
+                  name="Gemini 1.5 Pro"
+                  stroke="#3b82f6" 
+                  strokeWidth={2.5}
+                  dot={{ r: 3, strokeWidth: 1.5 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Budget (Mid-tier) Chart */}
+        <div className="bg-slate-900/30 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start mb-2">
+              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
+                <TrendingDown className="w-4 h-4 text-emerald-400" />
+                <span>가성비(Mid-tier) 모델 최근 1개월 가격 추이</span>
+              </h2>
+              <span className="text-[9px] text-emerald-300 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
+                USD / 1M Input
+              </span>
+            </div>
+            <p className="text-slate-400 text-[11px] mb-4">
+              과거 1개월 전(07/03)부터 현재(07/31)까지의 주요 3사 가성비 엔트리 단가 변동 흐름
+            </p>
+          </div>
+
+          <div className="h-64 w-full bg-slate-950/20 border border-slate-800/40 rounded-xl p-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={budgetHistoryData}
+                margin={{ top: 10, right: 15, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.4} />
+                <XAxis 
+                  dataKey="week" 
+                  stroke="#64748b" 
+                  fontSize={10}
+                  tickLine={false}
+                />
+                <YAxis 
+                  stroke="#64748b" 
+                  fontSize={10}
+                  tickFormatter={(value) => `$${value}`}
+                  domain={[0, 4]}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#0f172a', 
+                    borderColor: '#1e293b',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    fontSize: '11px',
+                    fontFamily: 'monospace'
+                  }}
+                  formatter={(value: any) => [`$${value.toFixed(3)}`, '']}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }}
+                  verticalAlign="bottom"
+                  align="center"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="OpenAI" 
+                  name="GPT-5.6 Luna"
+                  stroke="#10b981" 
+                  strokeWidth={2.5}
+                  dot={{ r: 3, strokeWidth: 1.5 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Anthropic" 
+                  name="Claude 3.5 Sonnet"
+                  stroke="#f59e0b" 
+                  strokeWidth={2.5}
+                  dot={{ r: 3, strokeWidth: 1.5 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Google" 
+                  name="Gemini 1.5 Flash"
+                  stroke="#3b82f6" 
+                  strokeWidth={2.5}
+                  dot={{ r: 3, strokeWidth: 1.5 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+      </section>
+
+      {/* 6. AI Model Pricing History & Trend Analysis (Added) */}
+      <section className="max-w-7xl mx-auto mt-8 bg-slate-900/30 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl overflow-hidden">
+        <h2 className="text-lg font-bold text-slate-200 mb-5 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-indigo-400" />
+          <span>글로벌 AI 모델 단가 변동 히스토리 & 가격 추세</span>
+        </h2>
+        
+        <p className="text-slate-400 text-xs mb-6 leading-relaxed">
+          주요 빅테크 3사의 지속적인 토큰 단가 인하 경쟁 추이와 역사적 요금 인하 마일스톤 정보입니다. (100만 토큰 기준 / 달러 가격 변동 추이)
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
+          {/* OpenAI Trend */}
+          <div className="p-4 bg-slate-950/40 border border-slate-800/40 rounded-xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+              <span className="font-bold text-slate-200">OpenAI (GPT 시리즈)</span>
+            </div>
+            <div className="space-y-3">
+              {providerNewsEvents.OpenAI.slice(0, 3).map((item, idx) => (
+                <div key={idx} className="flex flex-col gap-1">
+                  <span className={`text-[10px] font-semibold ${item.isRecent ? 'text-emerald-400' : 'text-slate-500'}`}>
+                    {item.date} {item.isRecent && '(최근)'}
+                  </span>
+                  <span className="text-slate-300 font-bold">
+                    {item.title} ({item.price})
+                  </span>
+                  <p className="text-[10px] text-slate-500 leading-normal">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Anthropic Trend */}
+          <div className="p-4 bg-slate-950/40 border border-slate-800/40 rounded-xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+              <span className="font-bold text-slate-200">Anthropic (Claude 시리즈)</span>
+            </div>
+            <div className="space-y-3">
+              {providerNewsEvents.Anthropic.slice(0, 3).map((item, idx) => (
+                <div key={idx} className="flex flex-col gap-1">
+                  <span className={`text-[10px] font-semibold ${item.isRecent ? 'text-amber-400' : 'text-slate-500'}`}>
+                    {item.date} {item.isRecent && '(최근)'}
+                  </span>
+                  <span className="text-slate-300 font-bold">
+                    {item.title} ({item.price})
+                  </span>
+                  <p className="text-[10px] text-slate-500 leading-normal">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Google Trend */}
+          <div className="p-4 bg-slate-950/40 border border-slate-800/40 rounded-xl space-y-4">
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span className="font-bold text-slate-200">Google (Gemini 시리즈)</span>
+            </div>
+            <div className="space-y-3">
+              {providerNewsEvents.Google.slice(0, 3).map((item, idx) => (
+                <div key={idx} className="flex flex-col gap-1">
+                  <span className={`text-[10px] font-semibold ${item.isRecent ? 'text-blue-400' : 'text-slate-500'}`}>
+                    {item.date} {item.isRecent && '(최근)'}
+                  </span>
+                  <span className="text-slate-300 font-bold">
+                    {item.title} ({item.price})
+                  </span>
+                  <p className="text-[10px] text-slate-500 leading-normal">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
