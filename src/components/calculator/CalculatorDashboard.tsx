@@ -1292,7 +1292,31 @@ export default function CalculatorDashboard() {
                         {model.provider}
                       </span>
                     </td>
-                    <td className="py-4 px-4 font-semibold text-white">{model.modelName}</td>
+                    <td className="py-4 px-4 font-semibold text-white">
+                      {model.provider === 'OpenAI' && model.tier === 'high' ? (
+                        <select
+                          value={selectedOpenAIHighModelName}
+                          onChange={(e) => setSelectedOpenAIHighModelName(e.target.value)}
+                          className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-xs cursor-pointer hover:border-slate-600 transition-colors"
+                        >
+                          <option value="GPT-5.6 Sol">GPT-5.6 Sol</option>
+                          <option value="GPT-5.6 Terra">GPT-5.6 Terra</option>
+                        </select>
+                      ) : model.provider === 'Anthropic' && model.tier === 'high' ? (
+                        <select
+                          value={selectedAnthropicHighModelName}
+                          onChange={(e) => setSelectedAnthropicHighModelName(e.target.value)}
+                          className="bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 font-bold font-mono focus:outline-none focus:border-indigo-500 text-xs cursor-pointer hover:border-slate-600 transition-colors"
+                        >
+                          <option value="Claude 3 Opus">Claude 3 Opus</option>
+                          <option value="Claude Opus 4.6">Claude Opus 4.6</option>
+                          <option value="Claude Fable 5">Claude Fable 5</option>
+                          <option value="Claude Sonnet 4.6">Claude Sonnet 4.6</option>
+                        </select>
+                      ) : (
+                        <span className="font-mono text-xs text-slate-300 font-semibold">{model.modelName}</span>
+                      )}
+                    </td>
                     <td className="py-4 px-4">
                       {model.tier === 'high' ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full border border-violet-500/20">
