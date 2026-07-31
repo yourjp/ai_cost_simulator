@@ -23,6 +23,13 @@ export default function CalculatorDashboard() {
   });
   const [history, setHistory] = useState<UserType[]>(['light', 'heavy', 'stdDev', 'heavyDev']);
 
+  // Developer ratio state (sum of stdDev and heavyDev) and automatic synchronizer
+  const [developerRatio, setDeveloperRatio] = useState<number>(30);
+  
+  useEffect(() => {
+    setDeveloperRatio(ratios.stdDev + ratios.heavyDev);
+  }, [ratios.stdDev, ratios.heavyDev]);
+
   // Model mix ratios state for 3 providers (High-tier vs Mid-tier blend)
   const [mixRatios, setMixRatios] = useState<ProviderMixState>({
     OpenAI: { high: 20, mid: 80 },
@@ -85,6 +92,30 @@ export default function CalculatorDashboard() {
     const { newRatios, newHistory } = agent.adjustRatios(ratios, type, targetPercent);
     setRatios(newRatios);
     setHistory(newHistory);
+  };
+
+  const handleDeveloperRatioChange = (value: number) => {
+    const val = Math.max(0, Math.min(100, value));
+    setDeveloperRatio(val);
+
+    const devTotal = val;
+    const nonDevTotal = 100 - val;
+
+    const currentDevSum = ratios.stdDev + ratios.heavyDev;
+    const currentNonDevSum = ratios.light + ratios.heavy;
+
+    const stdDevFactor = currentDevSum > 0 ? ratios.stdDev / currentDevSum : 0.67;
+    const lightFactor = currentNonDevSum > 0 ? ratios.light / currentNonDevSum : 0.71;
+
+    const newRatios = { ...ratios };
+
+    newRatios.stdDev = Math.round(devTotal * stdDevFactor);
+    newRatios.heavyDev = devTotal - newRatios.stdDev;
+
+    newRatios.light = Math.round(nonDevTotal * lightFactor);
+    newRatios.heavy = nonDevTotal - newRatios.light;
+
+    setRatios(newRatios);
   };
 
   const handleTokenUsageChange = (type: UserType, field: 'inputTokens' | 'outputTokens', value: number) => {
@@ -337,7 +368,7 @@ export default function CalculatorDashboard() {
             </div>
 
             {/* Exchange Rate Input */}
-            <div>
+            <div className="mb-5">
               <label htmlFor="exchange-rate" className="block text-slate-400 text-xs font-semibold mb-2 uppercase tracking-wider">
                 달러 환율 (KRW/USD)
               </label>
@@ -351,6 +382,25 @@ export default function CalculatorDashboard() {
                   value={formatComma(exchangeRate)}
                   onChange={(e) => setExchangeRate(Math.max(1, parseComma(e.target.value)))}
                   className="block w-full pl-10 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-semibold"
+                />
+              </div>
+            </div>
+
+            {/* Developer Ratio Input (Added) */}
+            <div>
+              <label htmlFor="developer-ratio" className="block text-slate-400 text-xs font-semibold mb-2 uppercase tracking-wider">
+                개발자 비율 (%)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <GitCompare className="h-5 w-5 text-slate-500" />
+                </div>
+                <input
+                  id="developer-ratio"
+                  type="text"
+                  value={formatComma(developerRatio)}
+                  onChange={(e) => handleDeveloperRatioChange(parseComma(e.target.value))}
+                  className="block w-full pl-10 pr-4 py-3 bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all font-semibold font-mono"
                 />
               </div>
             </div>
