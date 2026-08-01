@@ -25,6 +25,18 @@ type ModelTier = 'high' | 'mid';
 type NewsEvent = { date: string; headline: string; content: string };
 type NewsEventsByProvider = Record<ProviderName, NewsEvent[]>;
 type SelectedModelBySlot = Partial<Record<`${ProviderName}:${ModelTier}`, string>>;
+
+interface SimulationPreset {
+  name: string;
+  totalUsers: number;
+  exchangeRate: number;
+  currencyMode: 'USD' | 'KRW';
+  ratios: UserRatioState;
+  mixRatios: ProviderMixState;
+  selectedModelBySlot: SelectedModelBySlot;
+  isCustom?: boolean;
+}
+
 type Metadata = { dataUpdatedAt?: string };
 type ChartValue = unknown;
 type TrendPoint = { date?: string; week: string; OpenAI: number | null; Anthropic: number | null; Google: number | null };
@@ -141,6 +153,130 @@ export default function CalculatorDashboard() {
   });
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // -------------------------------------------------------------
+  // 💾 나만의 시뮬레이션 프리셋 저장 & 리포트 다운로드 (Preset & Export)
+  // -------------------------------------------------------------
+  const SYSTEM_PRESETS: SimulationPreset[] = [
+    {
+      name: '기본 시나리오 (Default)',
+      totalUsers: 1000,
+      exchangeRate: 1500,
+      currencyMode: 'USD',
+      ratios: { light: 60, heavy: 20, stdDev: 15, heavyDev: 5 },
+      mixRatios: {
+        OpenAI: { high: 20, mid: 80 },
+        Anthropic: { high: 20, mid: 80 },
+        Google: { high: 20, mid: 80 }
+      },
+      selectedModelBySlot: {
+        'OpenAI:high': 'gpt-5.6-sol',
+        'OpenAI:mid': 'gpt-5.6-luna',
+        'Anthropic:high': 'claude-opus-5',
+        'Anthropic:mid': 'claude-haiku-4-5',
+        'Google:high': 'gemini-3.6-flash',
+        'Google:mid': 'gemini-3.5-flash-lite'
+      }
+    },
+    {
+      name: '에이전트/개발자 중심 (Agent-centric)',
+      totalUsers: 1000,
+      exchangeRate: 1500,
+      currencyMode: 'USD',
+      ratios: { light: 10, heavy: 20, stdDev: 40, heavyDev: 30 },
+      mixRatios: {
+        OpenAI: { high: 60, mid: 40 },
+        Anthropic: { high: 60, mid: 40 },
+        Google: { high: 60, mid: 40 }
+      },
+      selectedModelBySlot: {
+        'OpenAI:high': 'gpt-5.6-sol',
+        'OpenAI:mid': 'gpt-5.6-luna',
+        'Anthropic:high': 'claude-opus-5',
+        'Anthropic:mid': 'claude-haiku-4-5',
+        'Google:high': 'gemini-3.6-flash',
+        'Google:mid': 'gemini-3.5-flash-lite'
+      }
+    },
+    {
+      name: '최소 비용 절약 (Cost-saving)',
+      totalUsers: 2000,
+      exchangeRate: 1500,
+      currencyMode: 'KRW',
+      ratios: { light: 60, heavy: 25, stdDev: 10, heavyDev: 5 },
+      mixRatios: {
+        OpenAI: { high: 0, mid: 100 },
+        Anthropic: { high: 0, mid: 100 },
+        Google: { high: 0, mid: 100 }
+      },
+      selectedModelBySlot: {
+        'OpenAI:high': 'gpt-5.6-terra',
+        'OpenAI:mid': 'gpt-5.6-luna',
+        'Anthropic:high': 'claude-sonnet-5',
+        'Anthropic:mid': 'claude-haiku-4-5',
+        'Google:high': 'gemini-3.5-flash',
+        'Google:mid': 'gemini-3.5-flash-lite'
+      }
+    }
+  ];
+
+  const [customPresets, setCustomPresets] = useState<SimulationPreset[]>([]);
+
+  // Load custom presets from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ai_pricing_custom_presets');
+      if (saved) {
+        try {
+          setCustomPresets(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to parse saved presets', e);
+        }
+      }
+    }
+  }, []);
+
+  const applyPreset = (preset: SimulationPreset) => {
+    setTotalUsers(preset.totalUsers);
+    setExchangeRate(preset.exchangeRate);
+    setCurrencyMode(preset.currencyMode);
+    setRatios(preset.ratios);
+    setMixRatios(preset.mixRatios);
+    if (preset.selectedModelBySlot) {
+      setSelectedModelBySlot(preset.selectedModelBySlot);
+    }
+  };
+
+  const handleSavePreset = () => {
+    const presetName = prompt('저장할 시뮬레이션 시나리오 프리셋의 이름을 입력하세요:', `사용자 시나리오 ${customPresets.length + 1}`);
+    if (!presetName) return;
+    if (presetName.trim() === '') return;
+
+    const newPreset: SimulationPreset = {
+      name: presetName.trim(),
+      totalUsers,
+      exchangeRate,
+      currencyMode,
+      ratios,
+      mixRatios,
+      selectedModelBySlot,
+      isCustom: true
+    };
+
+    const updated = [...customPresets, newPreset];
+    setCustomPresets(updated);
+    localStorage.setItem('ai_pricing_custom_presets', JSON.stringify(updated));
+    alert(`🎉 프리셋 [${presetName}]이 로컬 브라우저 저장소에 성공적으로 저장되었습니다!`);
+  };
+
+  const handleDeletePreset = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('해당 프리셋을 삭제하시겠습니까?')) return;
+    const updated = customPresets.filter((_, idx) => idx !== index);
+    setCustomPresets(updated);
+    localStorage.setItem('ai_pricing_custom_presets', JSON.stringify(updated));
+  };
+
 
   const parseMarkdownData = (content: string) => {
     const lines = content.split(/\r?\n/);
@@ -585,6 +721,68 @@ export default function CalculatorDashboard() {
     tokenUsage
   );
 
+  const handleExportReport = () => {
+    let report = `# 📊 AI Cost Simulation Report (AI 인프라 운용 비용 분석 리포트)\n\n`;
+    report += `> **시뮬레이터 생성 일시:** ${new Date().toLocaleString()}\n`;
+    report += `> **데이터 최근 갱신 기준:** ${dataUpdatedAt}\n\n`;
+    
+    report += `## 1. ⚙️ 시뮬레이션 주요 입력 매개변수\n`;
+    report += `- **총 운용 사용자 (명):** ${totalUsers.toLocaleString()} 명\n`;
+    report += `- **달러 적용 환율 (원):** ₩${exchangeRate.toLocaleString()} / USD\n`;
+    report += `- **비용 환산 모드:** ${currencyMode} 기준\n`;
+    report += `- **선택 모델 설정:**\n`;
+    report += `  - OpenAI 최상위 타겟: \`${getSelectedModelName('OpenAI', 'high')}\`\n`;
+    report += `  - Anthropic 최상위 타겟: \`${getSelectedModelName('Anthropic', 'high')}\`\n\n`;
+
+    report += `### 👥 유저 세그먼트 구성 및 토큰 사용량\n`;
+    report += `| 유저 등급 | 인원수 (명) | 점유율 (%) | 월간 Input 토큰 | 월간 Output 토큰 |\n`;
+    report += `| :--- | :---: | :---: | :---: | :---: |\n`;
+    report += `| 일반 라이트 유저 | ${(Math.round(totalUsers * (ratios.light / 100))).toLocaleString()}명 | ${ratios.light}% | 15k | 5k |\n`;
+    report += `| 일반 헤비 유저 | ${(Math.round(totalUsers * (ratios.heavy / 100))).toLocaleString()}명 | ${ratios.heavy}% | 150k | 50k |\n`;
+    report += `| 일반 개발자 | ${(Math.round(totalUsers * (ratios.stdDev / 100))).toLocaleString()}명 | ${ratios.stdDev}% | 300k | 100k |\n`;
+    report += `| 전문 에이전트 / 헤비 개발자 | ${(Math.round(totalUsers * (ratios.heavyDev / 100))).toLocaleString()}명 | ${ratios.heavyDev}% | 1.5M | 0.5M |\n\n`;
+
+    report += `### 🤖 서비스 제공사별 혼합 믹스 비율 (High-tier vs Mid-tier)\n`;
+    report += `| 제공사 | 최상위 모델 비율 | 가성비 모델 비율 |\n`;
+    report += `| :--- | :---: | :---: |\n`;
+    report += `| OpenAI | ${mixRatios.OpenAI.high}% | ${mixRatios.OpenAI.mid}% |\n`;
+    report += `| Anthropic | ${mixRatios.Anthropic.high}% | ${mixRatios.Anthropic.mid}% |\n`;
+    report += `| Google | ${mixRatios.Google.high}% | ${mixRatios.Google.mid}% |\n\n`;
+
+    report += `---\n\n`;
+    
+    report += `## 2. 💵 제공사별 총 운용 비용 요약 (Total Cost Summary)\n`;
+    report += `| 제공사 | 월간 총 비용 (USD) | 월간 총 비용 (KRW) | 1인당 평균 비용 (KRW) |\n`;
+    report += `| :--- | :---: | :---: | :---: |\n`;
+    providerResults.forEach(res => {
+      const avgKrw = res.krwCost / totalUsers;
+      report += `| **${res.provider}** | $${res.usdCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | ₩${Math.round(res.krwCost).toLocaleString()} | ₩${Math.round(avgKrw).toLocaleString()} |\n`;
+    });
+    report += `\n`;
+    
+    report += `---\n\n`;
+
+    report += `## 3. 📋 세부 구성 모델별 요율 및 요금 상세 내역\n`;
+    report += `| 제공사 | 모델명 | 등급 | 입력 단가 ($/1M) | 출력 단가 ($/1M) | 월간 예상 USD | 월간 예상 KRW |\n`;
+    report += `| :--- | :--- | :---: | :---: | :---: | :---: | :---: |\n`;
+    results.forEach(m => {
+      report += `| ${m.provider} | ${m.modelName} | ${m.tier === 'high' ? '최상위' : '가성비'} | $${m.inputCostPer1M.toFixed(3)} | $${m.outputCostPer1M.toFixed(2)} | $${m.usdCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} | ₩${Math.round(m.krwCost).toLocaleString()} |\n`;
+    });
+    report += `\n`;
+
+    report += `> 본 보고서는 **JP AI Pricing Simulator** 시스템에 의해 정적 연산된 비용 지표입니다.\n`;
+    report += `> 환율 변동 및 제공사 공식 단가 인하 마일스톤에 따라 비용이 변동될 수 있습니다.\n`;
+
+    const blob = new Blob([report], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `AI_Pricing_Simulator_Report_${new Date().toISOString().slice(0, 10)}.md`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Formatting helpers
   const formatNumber = (num: number, maxDecimals: number = 0) => {
     return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: maxDecimals }).format(num);
@@ -754,6 +952,63 @@ export default function CalculatorDashboard() {
           </div>
         </div>
       </header>
+
+      {/* 💾 나만의 시뮬레이션 프리셋 저장 & 리포트 다운로드 (Preset & Export) Quick Bar */}
+      <section className="max-w-7xl mx-auto mb-8 bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-xs font-bold text-slate-400 mr-2 flex items-center gap-1.5 font-mono">
+            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            시나리오 프리셋:
+          </span>
+          {/* 시스템 내장 프리셋 버튼 */}
+          {SYSTEM_PRESETS.map((preset, idx) => (
+            <button
+              key={`sys-${idx}`}
+              onClick={() => applyPreset(preset)}
+              className="px-3 py-1.5 bg-slate-950/60 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 active:bg-slate-900 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow"
+            >
+              {preset.name}
+            </button>
+          ))}
+
+          {/* 사용자가 직접 저장한 커스텀 프리셋 목록 */}
+          {customPresets.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2.5 border-l border-slate-800 pl-3">
+              {customPresets.map((preset, idx) => (
+                <div
+                  key={`custom-${idx}`}
+                  onClick={() => applyPreset(preset)}
+                  className="group flex items-center gap-1 px-3 py-1.5 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-900/60 hover:border-indigo-800 active:bg-indigo-950/60 text-indigo-200 hover:text-white rounded-lg text-xs font-semibold transition-all duration-200 shadow cursor-pointer"
+                >
+                  <span>{preset.name}</span>
+                  <button
+                    onClick={(e) => handleDeletePreset(idx, e)}
+                    className="text-indigo-400 hover:text-red-400 ml-1 opacity-60 group-hover:opacity-100 transition-opacity font-bold font-mono text-[9px] w-3 h-3 flex items-center justify-center bg-slate-950/40 hover:bg-slate-950 rounded-full"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2.5 ml-auto">
+          <button
+            onClick={handleSavePreset}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white rounded-lg text-xs font-bold transition-all duration-200 shadow"
+          >
+            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            <span>현재 설정 저장</span>
+          </button>
+          <button
+            onClick={handleExportReport}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:from-emerald-700 active:to-teal-700 text-white rounded-lg text-xs font-extrabold transition-all duration-200 shadow-md"
+          >
+            <span>리포트 내보내기 (.md)</span>
+          </button>
+        </div>
+      </section>
 
       {/* Main Layout Grid */}
       <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
