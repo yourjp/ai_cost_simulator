@@ -237,9 +237,6 @@ export default function CalculatorDashboard() {
   }, []);
 
   const applyPreset = (preset: SimulationPreset) => {
-    setTotalUsers(preset.totalUsers);
-    setExchangeRate(preset.exchangeRate);
-    setCurrencyMode(preset.currencyMode);
     setRatios(preset.ratios);
     setMixRatios(preset.mixRatios);
     if (preset.selectedModelBySlot) {
