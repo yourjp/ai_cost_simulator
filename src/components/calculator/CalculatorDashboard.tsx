@@ -781,28 +781,39 @@ export default function CalculatorDashboard() {
   };
 
   const handleCapturePng = () => {
-    const captureArea = document.getElementById('dashboard-capture-area');
-    if (!captureArea) return;
+    const captureArea = document.getElementById('dashboard-result-area');
+    if (!captureArea) {
+      alert('❌ 캡처 대상 영역(dashboard-result-area)을 찾을 수 없습니다.');
+      return;
+    }
 
     const runCapture = (html2canvasLib: any) => {
-      alert('📸 대시보드 스냅샷을 생성 중입니다. 잠시만 기다려 주세요...');
-      html2canvasLib(captureArea, {
-        useCORS: true,
-        scale: 2,
-        backgroundColor: '#070a13',
-        logging: false
-      }).then((canvas: HTMLCanvasElement) => {
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = `AI_Cost_Simulator_Snapshot_${new Date().toISOString().slice(0, 10)}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }).catch((err: any) => {
-        console.error('Capture failed', err);
-        alert('❌ 스냅샷 캡처 중 오류가 발생했습니다.');
-      });
+      // Defer rendering with a short timeout to prevent browser UI thread blockages
+      setTimeout(() => {
+        html2canvasLib(captureArea, {
+          useCORS: true,
+          allowTaint: true,
+          scale: 2,
+          backgroundColor: '#070a13',
+          logging: true,
+          ignoreElements: (element: HTMLElement) => {
+            return element.tagName === 'BUTTON' || element.tagName === 'INPUT' || element.classList.contains('no-print');
+          }
+        }).then((canvas: HTMLCanvasElement) => {
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL('image/png');
+          link.download = `AI_Cost_Simulator_Result_${new Date().toISOString().slice(0, 10)}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }).catch((err: any) => {
+          console.error('Capture failed', err);
+          alert('❌ 이미지 스냅샷 생성에 실패했습니다. (CORS 보안 규정 또는 SVG 필터 그리기 거부 발생)');
+        });
+      }, 300);
     };
+
+    alert('📸 결과 화면 스냅샷을 생성 중입니다. 확인을 누르시면 잠시 후 다운로드됩니다.');
 
     const globalHtml2canvas = (window as any).html2canvas;
     if (globalHtml2canvas) {
@@ -820,7 +831,7 @@ export default function CalculatorDashboard() {
         }
       };
       script.onerror = () => {
-        alert('❌ 스냅샷 라이브러리 로딩 중 오류가 발생했습니다.');
+        alert('❌ 스냅샷 라이브러리 스크립트 로드에 실패했습니다.');
       };
       document.head.appendChild(script);
     }
@@ -1474,7 +1485,7 @@ export default function CalculatorDashboard() {
         </section>
 
         {/* Right Side: Simulation Results & Visuals (7 cols) */}
-        <section className="lg:col-span-7 flex flex-col gap-6">
+        <section id="dashboard-result-area" className="lg:col-span-7 flex flex-col gap-6">
 
           {/* 2. Summary Dashboard Cards (Updated to Provider Blended Comparison) */}
           {summary && providerResults.length > 0 && (() => {
