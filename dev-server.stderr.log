@@ -1,0 +1,593 @@
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="ko"
+                          className="h-full antialiased"
+-                         data-hwp-extension="rhwp"
+-                         data-hwp-extension-version="0.8.2"
+                        >
+                          ...
+                            <div className="min-h-scre...">
+                              <header>
+                              <main className="max-w-7xl ...">
+                                <section className="lg:col-spa...">
+                                  <div className="bg-slate-9...">
+                                    <h2>
+                                    <div className="mb-5">
+                                      <label>
+                                      <div className="relative">
+                                        <div>
+                                        <input
+                                          id="total-users"
+                                          type="text"
+                                          value="1,000"
+                                          onChange={function onChange}
+                                          className="block w-full pl-10 pr-4 py-3 bg-slate-950/60 border border-slate-..."
+-                                         data-sharkid="__0"
+                                        >
+                                    <div>
+                                      <label>
+                                      <div className="relative">
+                                        <div>
+                                        <input
+                                          id="exchange-rate"
+                                          type="text"
+                                          value="1,500"
+                                          onChange={function onChange}
+                                          className="block w-full pl-10 pr-4 py-3 bg-slate-950/60 border border-slate-..."
+-                                         data-sharkid="__1"
+                                        >
+                                  <div className="bg-slate-9...">
+                                    <div>
+                                    <p>
+                                    <div className="mb-6 pb-6 ...">
+                                      <div className="flex items...">
+                                        <div>
+                                        <div className="flex items...">
+                                          <input
+                                            type="text"
+                                            value="200"
+                                            onChange={function onChange}
+                                            className="w-20 px-1.5 py-0.5 text-right bg-slate-950 border border-slate-..."
+-                                           data-sharkid="__2"
+                                          >
+                                          ...
+                                      <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={20}
+                                        onChange={function onChange}
+                                        className="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer..."
+-                                       data-sharkid="__3"
+                                      >
+                                    <div className="grid grid-...">
+                                      <div className="space-y-6">
+                                        <div className="space-y-2">
+                                          <div className="flex flex-...">
+                                            <div>
+                                            <div className="flex items...">
+                                              <input
+                                                type="text"
+                                                value="600"
+                                                onChange={function onChange}
+                                                className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slat..."
+-                                               data-sharkid="__4"
+                                              >
+                                              ...
+                                          <input
+                                            type="range"
+                                            min="0"
+                                            max={80}
+                                            step="0.1"
+                                            value={60}
+                                            onChange={function onChange}
+                                            className="w-full accent-emerald-500 bg-slate-950 rounded-lg cursor-pointe..."
+-                                           data-sharkid="__5"
+                                          >
+                                        <div className="space-y-2">
+                                          <div className="flex flex-...">
+                                            <div>
+                                            <div className="flex items...">
+                                              <input
+                                                type="text"
+                                                value="200"
+                                                onChange={function onChange}
+                                                className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slat..."
+-                                               data-sharkid="__6"
+                                              >
+                                              ...
+                                          <input
+                                            type="range"
+                                            min="0"
+                                            max={80}
+                                            step="0.1"
+                                            value={20}
+                                            onChange={function onChange}
+                                            className="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer ..."
+-                                           data-sharkid="__7"
+                                          >
+                                      <div className="space-y-6">
+                                        <div className="space-y-2">
+                                          <div className="flex flex-...">
+                                            <div>
+                                            <div className="flex items...">
+                                              <input
+                                                type="text"
+                                                value="150"
+                                                onChange={function onChange}
+                                                className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slat..."
+-                                               data-sharkid="__8"
+                                              >
+                                              ...
+                                          <input
+                                            type="range"
+                                            min="0"
+                                            max={20}
+                                            step="0.1"
+                                            value={15}
+                                            onChange={function onChange}
+                                            className="w-full accent-blue-500 bg-slate-950 rounded-lg cursor-pointer h..."
+-                                           data-sharkid="__9"
+                                          >
+                                        <div className="space-y-2">
+                                          <div className="flex flex-...">
+                                            <div>
+                                            <div className="flex items...">
+                                              <input
+                                                type="text"
+                                                value="50"
+                                                onChange={function onChange}
+                                                className="w-24 px-2 py-0.5 text-right bg-slate-950 border border-slat..."
+-                                               data-sharkid="__10"
+                                              >
+                                              ...
+                                          <input
+                                            type="range"
+                                            min="0"
+                                            max={20}
+                                            step="0.1"
+                                            value={5}
+                                            onChange={function onChange}
+                                            className="w-full accent-purple-500 bg-slate-950 rounded-lg cursor-pointer..."
+-                                           data-sharkid="__11"
+                                          >
+                                  <div className="bg-slate-9...">
+                                    <div>
+                                    <p>
+                                    <div className="space-y-6">
+                                      <div className="p-4 bg-sla...">
+                                        <div>
+                                        <div>
+                                        <input
+                                          type="range"
+                                          min="0"
+                                          max="100"
+                                          value={20}
+                                          onChange={function onChange}
+                                          className="w-full accent-[#10a37f] bg-slate-950 rounded-lg cursor-pointer h-1.5"
+-                                         data-sharkid="__12"
+                                        >
+                                      <div className="p-4 bg-sla...">
+                                        <div>
+                                        <div>
+                                        <input
+                                          type="range"
+                                          min="0"
+                                          max="100"
+                                          value={20}
+                                          onChange={function onChange}
+                                          className="w-full accent-[#f37022] bg-slate-950 rounded-lg cursor-pointer h-1.5"
+-                                         data-sharkid="__13"
+                                        >
+                                      <div className="p-4 bg-sla...">
+                                        <div>
+                                        <div>
+                                        <input
+                                          type="range"
+                                          min="0"
+                                          max="100"
+                                          value={20}
+                                          onChange={function onChange}
+                                          className="w-full accent-[#4285f4] bg-slate-950 rounded-lg cursor-pointer h-1.5"
+-                                         data-sharkid="__14"
+                                        >
+                                ...
+                                  <div className="grid grid-...">
+                                    <div className="flex flex-...">
+                                      <span>
+                                      <div className="flex flex-...">
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="300"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__15"
+                                          >
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="75"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__16"
+                                          >
+                                    <div className="flex flex-...">
+                                      <span>
+                                      <div className="flex flex-...">
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="1,500"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__17"
+                                          >
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="400"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__18"
+                                          >
+                                    <div className="flex flex-...">
+                                      <span>
+                                      <div className="flex flex-...">
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="5,000"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__19"
+                                          >
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="1,000"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__20"
+                                          >
+                                    <div className="flex flex-...">
+                                      <span>
+                                      <div className="flex flex-...">
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="20,000"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__21"
+                                          >
+                                        <div>
+                                          <label>
+                                          <input
+                                            type="text"
+                                            value="4,000"
+                                            onChange={function onChange}
+                                            onBlur={function onBlur}
+                                            className="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded..."
+-                                           data-sharkid="__22"
+                                          >
+                              <section>
+                              ...
+                                <tbody className="divide-y d...">
+                                  <tr className="hover:bg-s...">
+                                    <td>
+                                    <td className="py-4 px-4 ...">
+                                      <select
+                                        value="gemini-3.6-flash"
+                                        onChange={function onChange}
+                                        className="w-full max-w-[220px] bg-slate-950 border border-slate-800 rounded p..."
+-                                       data-sharkid="__23"
+                                      >
+                                    ...
+                                  <tr className="hover:bg-s...">
+                                    <td>
+                                    <td className="py-4 px-4 ...">
+                                      <select
+                                        value="gemini-3.5-flash-lite"
+                                        onChange={function onChange}
+                                        className="w-full max-w-[220px] bg-slate-950 border border-slate-800 rounded p..."
+-                                       data-sharkid="__24"
+                                      >
+                                    ...
+                                  <tr className="hover:bg-s...">
+                                    <td>
+                                    <td className="py-4 px-4 ...">
+                                      <select
+                                        value="gpt-5.6-sol"
+                                        onChange={function onChange}
+                                        className="w-full max-w-[220px] bg-slate-950 border border-slate-800 rounded p..."
+-                                       data-sharkid="__25"
+                                      >
+                                    ...
+                                  <tr className="hover:bg-s...">
+                                    <td>
+                                    <td className="py-4 px-4 ...">
+                                      <select
+                                        value="gpt-5.6-luna"
+                                        onChange={function onChange}
+                                        className="w-full max-w-[220px] bg-slate-950 border border-slate-800 rounded p..."
+-                                       data-sharkid="__26"
+                                      >
+                                    ...
+                                  <tr className="hover:bg-s...">
+                                    <td>
+                                    <td className="py-4 px-4 ...">
+                                      <select
+                                        value="claude-fable-5"
+                                        onChange={function onChange}
+                                        className="w-full max-w-[220px] bg-slate-950 border border-slate-800 rounded p..."
+-                                       data-sharkid="__27"
+                                      >
+                                    ...
+                                  <tr className="hover:bg-s...">
+                                    <td>
+                                    <td className="py-4 px-4 ...">
+                                      <select
+                                        value="claude-sonnet-5"
+                                        onChange={function onChange}
+                                        className="w-full max-w-[220px] bg-slate-950 border border-slate-800 rounded p..."
+-                                       data-sharkid="__28"
+                                      >
+                                    ...
+                              ...
+                  ...
+ 
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="ko"
+                          className="h-full antialiased"
+-                         data-hwp-extension="rhwp"
+-                         data-hwp-extension-version="0.8.2"
+                        >
+                  ...
+ 
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="ko"
+                          className="h-full antialiased"
+-                         data-hwp-extension="rhwp"
+-                         data-hwp-extension-version="0.8.2"
+                        >
+                  ...
+ 
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="ko"
+                          className="h-full antialiased"
+-                         data-hwp-extension="rhwp"
+-                         data-hwp-extension-version="0.8.2"
+                        >
+                  ...
+ 
+[browser] PricingDataAgent: Failed to fetch online pricing. Loading fallback local constants. Error: API request failed due to rate limits or network issues.
+    at PricingDataAgent.fetchPricingData (src/components/calculator/PricingDataAgent.ts:94:15)
+  92 |
+  93 |       if (forceFail || Math.random() < 0.15) {
+> 94 |         throw new Error('API request failed due to rate limits or network issues.');
+     |               ^
+  95 |       }
+  96 |
+  97 |       // Simulate receiving fresh data (which is identical to current rates) (src/components/calculator/PricingDataAgent.ts:101:15)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="ko"
+                          className="h-full antialiased"
+-                         data-hwp-extension="rhwp"
+-                         data-hwp-extension-version="0.8.2"
+                        >
+                  ...
+ 
+[browser] PricingDataAgent: Failed to fetch online pricing. Loading fallback local constants. Error: API request failed due to rate limits or network issues.
+    at PricingDataAgent.fetchPricingData (src/components/calculator/PricingDataAgent.ts:94:15)
+  92 |
+  93 |       if (forceFail || Math.random() < 0.15) {
+> 94 |         throw new Error('API request failed due to rate limits or network issues.');
+     |               ^
+  95 |       }
+  96 |
+  97 |       // Simulate receiving fresh data (which is identical to current rates) (src/components/calculator/PricingDataAgent.ts:101:15)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="ko"
+                          className="h-full antialiased"
+-                         data-hwp-extension="rhwp"
+-                         data-hwp-extension-version="0.8.2"
+                        >
+                  ...
+ 
+[browser] PricingDataAgent: Failed to fetch online pricing. Loading fallback local constants. Error: API request failed due to rate limits or network issues.
+    at PricingDataAgent.fetchPricingData (src/components/calculator/PricingDataAgent.ts:94:15)
+  92 |
+  93 |       if (forceFail || Math.random() < 0.15) {
+> 94 |         throw new Error('API request failed due to rate limits or network issues.');
+     |               ^
+  95 |       }
+  96 |
+  97 |       // Simulate receiving fresh data (which is identical to current rates) (src/components/calculator/PricingDataAgent.ts:101:15)

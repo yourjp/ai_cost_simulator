@@ -14,15 +14,15 @@
       "modelName": "gpt-5.6-terra",
       "provider": "OpenAI",
       "tier": "high",
-      "inputCostPer1M": 2,
-      "outputCostPer1M": 12
+      "inputCostPer1M": 2.5,
+      "outputCostPer1M": 15
     },
     {
       "modelName": "gpt-5.6-luna",
       "provider": "OpenAI",
       "tier": "mid",
-      "inputCostPer1M": 0.2,
-      "outputCostPer1M": 1.2
+      "inputCostPer1M": 1,
+      "outputCostPer1M": 6
     },
     {
       "modelName": "gpt-5.4-nano",
@@ -100,78 +100,91 @@
       "context": "1M",
       "maxOutput": "128k",
       "valsIndex": "73.12%",
+      "sweBench": "64.6%",
       "features": "복잡한 전문 작업과 장기 추론, 코딩 에이전트 워크플로에 적합한 OpenAI 최상위 모델"
     },
     "gpt-5.6-terra": {
       "context": "1M",
       "maxOutput": "128k",
       "valsIndex": "65.14%",
+      "sweBench": "63.4%",
       "features": "지능과 비용 균형이 필요한 비즈니스 자동화와 대량 추론 작업에 적합한 모델"
     },
     "gpt-5.6-luna": {
       "context": "1M",
       "maxOutput": "128k",
       "valsIndex": "69.88%",
+      "sweBench": "62.7%",
       "features": "비용 민감형 고트래픽 워크로드와 빠른 대량 응답에 적합한 경량 모델"
     },
     "gpt-5.4-nano": {
       "context": "-",
       "maxOutput": "-",
       "valsIndex": "없음",
+      "sweBench": "없음",
       "features": "초저가 단순 응답과 대규모 트래픽 처리에 적합한 이전 세대 경량 모델"
     },
     "claude-fable-5": {
       "context": "1M",
       "maxOutput": "128k",
       "valsIndex": "75.14%",
+      "sweBench": "80.0%",
       "features": "Anthropic의 최고 성능 일반 제공 모델로 장기 실행 에이전트와 고난도 추론에 적합"
     },
     "claude-opus-5": {
       "context": "1M",
       "maxOutput": "128k",
       "valsIndex": "74.82%",
+      "sweBench": "없음",
       "features": "복잡한 에이전트 코딩과 엔터프라이즈 지식 작업에 적합한 고성능 모델"
     },
     "claude-sonnet-5": {
       "context": "1M",
       "maxOutput": "128k",
       "valsIndex": "68.61%",
+      "sweBench": "없음",
       "features": "속도와 지능의 조합이 중요한 코딩, 분석, 실무 자동화에 적합한 모델"
     },
     "claude-haiku-4-5": {
       "context": "200k",
       "maxOutput": "64k",
       "valsIndex": "40.90%",
+      "sweBench": "없음",
       "features": "가장 빠른 Claude 계열 모델로 지연시간이 중요한 대량 처리에 적합"
     },
     "gemini-3.6-flash": {
       "context": "-",
       "maxOutput": "-",
       "valsIndex": "62.43%",
+      "sweBench": "없음",
       "features": "속도와 지능을 균형 있게 제공하는 Google의 최신 안정 Flash 모델"
     },
     "gemini-3.5-flash": {
       "context": "-",
       "maxOutput": "-",
       "valsIndex": "62.75%",
+      "sweBench": "없음",
       "features": "에이전트, 코딩, 검색 및 grounding 중심 작업에 적합한 고효율 Flash 모델"
     },
     "gemini-3.1-pro": {
       "context": "2M",
       "maxOutput": "64k",
       "valsIndex": "없음",
+      "sweBench": "54.2%",
       "features": "최신 Pro 계열이 가격표에 없을 때 비교 기준으로 유지하는 이전 세대 Google Pro 모델"
     },
     "gemini-3.5-flash-lite": {
       "context": "-",
       "maxOutput": "-",
       "valsIndex": "51.00%",
+      "sweBench": "없음",
       "features": "고처리량 에이전트 작업, 번역, 단순 데이터 처리에 적합한 최저비용 GA 모델"
     },
     "gemini-3.1-flash-lite": {
       "context": "-",
       "maxOutput": "-",
       "valsIndex": "없음",
+      "sweBench": "없음",
       "features": "저비용 텍스트, 이미지, 비디오 처리와 단순 데이터 처리에 적합한 이전 세대 Flash-Lite 모델"
     }
   },
@@ -228,8 +241,22 @@
         "Google": 1.5
       },
       {
-        "date": "2026-02-28",
-        "week": "02/28",
+        "date": "2026-02-22",
+        "week": "02/22",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-03-01",
+        "week": "03/01",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-03-08",
+        "week": "03/08",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
@@ -242,29 +269,71 @@
         "Google": 1.5
       },
       {
-        "date": "2026-03-31",
-        "week": "03/31",
+        "date": "2026-03-22",
+        "week": "03/22",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
       },
       {
-        "date": "2026-04-15",
-        "week": "04/15",
+        "date": "2026-03-29",
+        "week": "03/29",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
       },
       {
-        "date": "2026-04-30",
-        "week": "04/30",
+        "date": "2026-04-05",
+        "week": "04/05",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
       },
       {
-        "date": "2026-05-15",
-        "week": "05/15",
+        "date": "2026-04-12",
+        "week": "04/12",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-04-19",
+        "week": "04/19",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-04-26",
+        "week": "04/26",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-05-03",
+        "week": "05/03",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-05-10",
+        "week": "05/10",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-05-17",
+        "week": "05/17",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-05-24",
+        "week": "05/24",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
@@ -277,22 +346,57 @@
         "Google": 1.5
       },
       {
-        "date": "2026-06-15",
-        "week": "06/15",
+        "date": "2026-06-07",
+        "week": "06/07",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
       },
       {
-        "date": "2026-06-30",
-        "week": "06/30",
+        "date": "2026-06-14",
+        "week": "06/14",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
       },
       {
-        "date": "2026-07-15",
-        "week": "07/15",
+        "date": "2026-06-21",
+        "week": "06/21",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-06-28",
+        "week": "06/28",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-07-05",
+        "week": "07/05",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-07-12",
+        "week": "07/12",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-07-19",
+        "week": "07/19",
+        "OpenAI": 5,
+        "Anthropic": 10,
+        "Google": 1.5
+      },
+      {
+        "date": "2026-07-26",
+        "week": "07/26",
         "OpenAI": 5,
         "Anthropic": 10,
         "Google": 1.5
@@ -314,8 +418,22 @@
         "Google": 0.3
       },
       {
-        "date": "2026-02-28",
-        "week": "02/28",
+        "date": "2026-02-22",
+        "week": "02/22",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-03-01",
+        "week": "03/01",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-03-08",
+        "week": "03/08",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
@@ -328,29 +446,71 @@
         "Google": 0.3
       },
       {
-        "date": "2026-03-31",
-        "week": "03/31",
+        "date": "2026-03-22",
+        "week": "03/22",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
       },
       {
-        "date": "2026-04-15",
-        "week": "04/15",
+        "date": "2026-03-29",
+        "week": "03/29",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
       },
       {
-        "date": "2026-04-30",
-        "week": "04/30",
+        "date": "2026-04-05",
+        "week": "04/05",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
       },
       {
-        "date": "2026-05-15",
-        "week": "05/15",
+        "date": "2026-04-12",
+        "week": "04/12",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-04-19",
+        "week": "04/19",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-04-26",
+        "week": "04/26",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-05-03",
+        "week": "05/03",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-05-10",
+        "week": "05/10",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-05-17",
+        "week": "05/17",
+        "OpenAI": 1,
+        "Anthropic": 1,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-05-24",
+        "week": "05/24",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
@@ -363,31 +523,66 @@
         "Google": 0.3
       },
       {
-        "date": "2026-06-15",
-        "week": "06/15",
+        "date": "2026-06-07",
+        "week": "06/07",
         "OpenAI": 1,
         "Anthropic": 1,
         "Google": 0.3
       },
       {
-        "date": "2026-06-30",
-        "week": "06/30",
+        "date": "2026-06-14",
+        "week": "06/14",
         "OpenAI": 1,
-        "Anthropic": 1,
+        "Anthropic": 2,
         "Google": 0.3
       },
       {
-        "date": "2026-07-15",
-        "week": "07/15",
+        "date": "2026-06-21",
+        "week": "06/21",
         "OpenAI": 1,
-        "Anthropic": 1,
+        "Anthropic": 2,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-06-28",
+        "week": "06/28",
+        "OpenAI": 1,
+        "Anthropic": 2,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-07-05",
+        "week": "07/05",
+        "OpenAI": 1,
+        "Anthropic": 2,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-07-12",
+        "week": "07/12",
+        "OpenAI": 1,
+        "Anthropic": 2,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-07-19",
+        "week": "07/19",
+        "OpenAI": 1,
+        "Anthropic": 2,
+        "Google": 0.3
+      },
+      {
+        "date": "2026-07-26",
+        "week": "07/26",
+        "OpenAI": 1,
+        "Anthropic": 2,
         "Google": 0.3
       },
       {
         "date": "2026-07-31",
         "week": "07/31",
-        "OpenAI": 0.2,
-        "Anthropic": 1,
+        "OpenAI": 1,
+        "Anthropic": 2,
         "Google": 0.3
       }
     ]

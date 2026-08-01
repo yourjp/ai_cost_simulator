@@ -8,7 +8,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { Users, DollarSign, RefreshCw, Layers, Award, Sparkles, TrendingUp, TrendingDown, Info, GitCompare } from 'lucide-react';
 import dynamicData from './dynamicData.json';
 
-type PerformanceSpec = { context: string; maxOutput: string; valsIndex: string; features: string };
+type PerformanceSpec = { context: string; maxOutput: string; valsIndex: string; sweBench: string; features: string };
 
 const MODEL_PERFORMANCE_DB: Record<string, PerformanceSpec> =
   (dynamicData.performanceData as Record<string, PerformanceSpec>) || {};
@@ -27,7 +27,7 @@ type NewsEventsByProvider = Record<ProviderName, NewsEvent[]>;
 type SelectedModelBySlot = Partial<Record<`${ProviderName}:${ModelTier}`, string>>;
 type Metadata = { dataUpdatedAt?: string };
 type ChartValue = unknown;
-type TrendPoint = { date?: string; week: string; OpenAI: number; Anthropic: number; Google: number };
+type TrendPoint = { date?: string; week: string; OpenAI: number | null; Anthropic: number | null; Google: number | null };
 type CostChartDatum = {
   name: string;
   cost: number;
@@ -46,6 +46,21 @@ const PROVIDER_NEWS_EVENTS: NewsEventsByProvider = (dynamicData.newsData as News
 const TREND_DATA = (dynamicData.trendData as { high?: TrendPoint[]; mid?: TrendPoint[] }) || {};
 const DATA_METADATA = (dynamicData.metadata as Metadata) || {};
 const APP_UPDATED_AT = '2026.07.31';
+const MODEL_LAUNCH_DATES: Record<string, string> = {
+  'gpt-5.6-sol': '2026-06-26',
+  'gpt-5.6-terra': '2026-06-26',
+  'gpt-5.6-luna': '2026-06-26',
+  'gpt-5.4-nano': '2026-01-01',
+  'claude-fable-5': '2026-06-09',
+  'claude-opus-5': '2026-07-24',
+  'claude-sonnet-5': '2026-06-30',
+  'claude-haiku-4-5': '2025-10-01',
+  'gemini-3.6-flash': '2026-07-24',
+  'gemini-3.5-flash': '2026-05-19',
+  'gemini-3.1-pro': '2026-02-19',
+  'gemini-3.5-flash-lite': '2026-05-19',
+  'gemini-3.1-flash-lite': '2026-05-07',
+};
 
 const isProviderName = (provider: string): provider is ProviderName => {
   return provider === 'OpenAI' || provider === 'Anthropic' || provider === 'Google';
@@ -182,14 +197,15 @@ export default function CalculatorDashboard() {
           if (modelName && !isNaN(inputCost) && !isNaN(outputCost)) {
             parsedPricing.push({ modelName, provider, tier, inputCostPer1M: inputCost, outputCostPer1M: outputCost });
           }
-        } else if (currentSection === 'performance' && parts.length >= 5) {
+        } else if (currentSection === 'performance' && parts.length >= 6) {
           const modelName = parts[0];
           const context = parts[1];
           const maxOutput = parts[2];
           const valsIndex = parts[3];
-          const features = parts[4];
+          const sweBench = parts[4];
+          const features = parts[5];
           if (modelName) {
-            parsedPerformance[modelName] = { context, maxOutput, valsIndex, features };
+            parsedPerformance[modelName] = { context, maxOutput, valsIndex, sweBench, features };
           }
         } else if (currentSection === 'news' && parts.length >= 4) {
           const provider = parts[0];
@@ -345,20 +361,45 @@ export default function CalculatorDashboard() {
     }
   ];
 
-  const flagshipHistoryData = trendData.high.length ? trendData.high : fallbackFlagshipHistoryData;
-  const budgetHistoryData = trendData.mid.length ? trendData.mid : fallbackBudgetHistoryData;
+  const orderTrendDataByDate = (data: TrendPoint[]) =>
+    [...data].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+
+  const getRecentThreeMonthTrendData = (data: TrendPoint[]) => {
+    if (!data.length) return data;
+    const latestDate = data[data.length - 1].date;
+    if (!latestDate) return data;
+    const cutoff = new Date(`${latestDate}T00:00:00`);
+    cutoff.setMonth(cutoff.getMonth() - 3);
+    return data.filter(point => !point.date || new Date(`${point.date}T00:00:00`) >= cutoff);
+  };
+
+  const flagshipHistoryData = getRecentThreeMonthTrendData(orderTrendDataByDate(
+    trendData.high.length ? trendData.high : fallbackFlagshipHistoryData
+  ));
+  const budgetHistoryData = getRecentThreeMonthTrendData(orderTrendDataByDate(
+    trendData.mid.length ? trendData.mid : fallbackBudgetHistoryData
+  ));
 
   const applySelectedModelPricesToLatestTrend = (tier: ModelTier, data: TrendPoint[]) => {
     if (!data.length) return data;
 
     return data.map((point, index) => {
-      if (index !== data.length - 1) return point;
+      const nextPoint = { ...point };
+      (['OpenAI', 'Anthropic', 'Google'] as ProviderName[]).forEach(provider => {
+        const selectedModel = getSelectedModelName(provider, tier);
+        const launchDate = selectedModel ? MODEL_LAUNCH_DATES[selectedModel] : undefined;
+        if (launchDate && point.date && point.date < launchDate) {
+          nextPoint[provider] = null;
+        }
+      });
+
+      if (index !== data.length - 1) return nextPoint;
 
       return {
-        ...point,
-        OpenAI: filteredPricingData.find(model => model.provider === 'OpenAI' && model.tier === tier)?.inputCostPer1M ?? point.OpenAI,
-        Anthropic: filteredPricingData.find(model => model.provider === 'Anthropic' && model.tier === tier)?.inputCostPer1M ?? point.Anthropic,
-        Google: filteredPricingData.find(model => model.provider === 'Google' && model.tier === tier)?.inputCostPer1M ?? point.Google,
+        ...nextPoint,
+        OpenAI: filteredPricingData.find(model => model.provider === 'OpenAI' && model.tier === tier)?.inputCostPer1M ?? nextPoint.OpenAI,
+        Anthropic: filteredPricingData.find(model => model.provider === 'Anthropic' && model.tier === tier)?.inputCostPer1M ?? nextPoint.Anthropic,
+        Google: filteredPricingData.find(model => model.provider === 'Google' && model.tier === tier)?.inputCostPer1M ?? nextPoint.Google,
       };
     });
   };
@@ -368,10 +409,10 @@ export default function CalculatorDashboard() {
 
   const getTrendYAxisMax = (data: TrendPoint[]) => {
     const maxPrice = data.reduce((max, point) => {
-      return Math.max(max, point.OpenAI, point.Anthropic, point.Google);
+      return Math.max(max, point.OpenAI ?? 0, point.Anthropic ?? 0, point.Google ?? 0);
     }, 0);
 
-    return Math.max(1, Math.ceil(maxPrice * 1.1 * 100) / 100);
+    return maxPrice > 0 ? Math.ceil(maxPrice * 1.1 * 100) / 100 : 1;
   };
 
   const flagshipYAxisMax = getTrendYAxisMax(selectedFlagshipHistoryData);
@@ -1547,6 +1588,7 @@ export default function CalculatorDashboard() {
                     <th className="py-2 px-3 text-center">컨텍스트</th>
                     <th className="py-2 px-3 text-center">출력 한도</th>
                     <th className="py-2 px-3 text-center text-violet-300 font-bold">Vals Index</th>
+                    <th className="py-2 px-3 text-center text-cyan-300 font-bold">SWE-bench Pro</th>
                     <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
                   </tr>
                 </thead>
@@ -1555,7 +1597,7 @@ export default function CalculatorDashboard() {
                     .filter(m => m.tier === 'high')
                     .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                     .map((model, index) => {
-                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-' };
+                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-', sweBench: '-' };
                       return (
                         <tr key={index} className="hover:bg-slate-800/10 transition-colors">
                           <td className="py-2.5 px-3 font-bold">
@@ -1567,6 +1609,7 @@ export default function CalculatorDashboard() {
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.context}</td>
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.maxOutput}</td>
                           <td className="py-2.5 px-3 text-center font-mono font-extrabold text-violet-300 bg-violet-500/5">{spec.valsIndex}</td>
+                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-cyan-300 bg-cyan-500/5">{spec.sweBench}</td>
                           <td className="py-2.5 px-3 text-right font-mono text-[10px] text-slate-300">
                             ${model.inputCostPer1M.toFixed(model.inputCostPer1M < 0.1 ? 3 : 2)} / ${model.outputCostPer1M.toFixed(2)}
                           </td>
@@ -1615,6 +1658,7 @@ export default function CalculatorDashboard() {
                     <th className="py-2 px-3 text-center">컨텍스트</th>
                     <th className="py-2 px-3 text-center">출력 한도</th>
                     <th className="py-2 px-3 text-center text-emerald-300 font-bold">Vals Index</th>
+                    <th className="py-2 px-3 text-center text-cyan-300 font-bold">SWE-bench Pro</th>
                     <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
                   </tr>
                 </thead>
@@ -1623,7 +1667,7 @@ export default function CalculatorDashboard() {
                     .filter(m => m.tier === 'mid')
                     .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                     .map((model, index) => {
-                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-' };
+                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-', sweBench: '-' };
                       return (
                         <tr key={index} className="hover:bg-slate-800/10 transition-colors">
                           <td className="py-2.5 px-3 font-bold">
@@ -1635,6 +1679,7 @@ export default function CalculatorDashboard() {
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.context}</td>
                           <td className="py-2.5 px-3 text-center font-mono text-slate-300">{spec.maxOutput}</td>
                           <td className="py-2.5 px-3 text-center font-mono font-extrabold text-emerald-300 bg-emerald-500/5">{spec.valsIndex}</td>
+                          <td className="py-2.5 px-3 text-center font-mono font-extrabold text-cyan-300 bg-cyan-500/5">{spec.sweBench}</td>
                           <td className="py-2.5 px-3 text-right font-mono text-[10px] text-slate-300">
                             ${model.inputCostPer1M.toFixed(model.inputCostPer1M < 0.1 ? 3 : 2)} / ${model.outputCostPer1M.toFixed(2)}
                           </td>
@@ -1684,14 +1729,14 @@ export default function CalculatorDashboard() {
             <div className="flex justify-between items-start mb-2">
               <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-indigo-400" />
-                <span>최상위(High-tier) 모델 최근 6개월 가격 추이</span>
+                <span>최상위(High-tier) 모델 최근 3개월 가격 추이</span>
               </h2>
               <span className="text-[9px] text-indigo-300 font-bold bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20 font-mono">
                 USD / 1M Input
               </span>
             </div>
             <p className="text-slate-400 text-[11px] mb-4">
-              최근 6개월 동안 15일 단위로 기록한 주요 3사 최상위 플래그십 단가 변동 흐름
+              최근 3개월 동안 7일 단위로 표시하는 주요 3사 최상위 플래그십 단가 변동 흐름
             </p>
           </div>
           
@@ -1750,14 +1795,14 @@ export default function CalculatorDashboard() {
             <div className="flex justify-between items-start mb-2">
               <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-emerald-400" />
-                <span>가성비(Mid-tier) 모델 최근 6개월 가격 추이</span>
+                <span>가성비(Mid-tier) 모델 최근 3개월 가격 추이</span>
               </h2>
               <span className="text-[9px] text-emerald-300 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
                 USD / 1M Input
               </span>
             </div>
             <p className="text-slate-400 text-[11px] mb-4">
-              최근 6개월 동안 15일 단위로 기록한 주요 3사 가성비 엔트리 단가 변동 흐름
+              최근 3개월 동안 7일 단위로 표시하는 주요 3사 가성비 엔트리 단가 변동 흐름
             </p>
           </div>
 

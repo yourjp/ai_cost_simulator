@@ -94,18 +94,20 @@ function parseData() {
           }
         }
       } else if (currentSection === 'performance') {
-        if (parts.length >= 5) {
+        if (parts.length >= 6) {
           const modelName = parts[0];
           const context = parts[1];
           const maxOutput = parts[2];
           const valsIndex = parts[3];
-          const features = parts[4];
+          const sweBench = parts[4];
+          const features = parts[5];
 
           if (modelName) {
             performanceData[modelName] = {
               context,
               maxOutput,
               valsIndex,
+              sweBench,
               features
             };
           }
