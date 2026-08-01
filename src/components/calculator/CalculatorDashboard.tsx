@@ -1022,6 +1022,31 @@ export default function CalculatorDashboard() {
             color: #0f172a !important;
           }
 
+          /* Merge 3 provider cost cards into a single unified summary box in PDF print view */
+          .print-summary-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 0 !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.75rem !important;
+            background-color: #ffffff !important;
+            margin-bottom: 1.5rem !important;
+            overflow: hidden !important;
+          }
+
+          .print-summary-card {
+            border: none !important;
+            border-right: 1px solid #e2e8f0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            padding: 0.75rem 1rem !important;
+            box-shadow: none !important;
+          }
+
+          .print-summary-card:last-child {
+            border-right: none !important;
+          }
+
           /* Hide all control panels, preset bars, files uploader, headers, and footer */
           header,
           footer,
@@ -1571,10 +1596,10 @@ export default function CalculatorDashboard() {
             const maxProv = sortedBlended[2];
 
             return (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print-summary-grid">
                 
                 {/* 1. Cheapest Provider Card (MIN) */}
-                <div className="bg-gradient-to-br from-emerald-950/20 to-slate-900/50 backdrop-blur-md border border-emerald-500/15 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-emerald-500/35 transition-all duration-300">
+                <div className="bg-gradient-to-br from-emerald-950/20 to-slate-900/50 backdrop-blur-md border border-emerald-500/15 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-emerald-500/35 transition-all duration-300 print-summary-card">
                   <div className="absolute top-3 right-3 text-emerald-400/20 font-extrabold text-3xl font-mono">MIN</div>
                   <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">최저 월비용 (혼합)</span>
                   <h3 className="text-xl font-bold text-white mt-1">{minProv.provider}</h3>
@@ -1592,7 +1617,7 @@ export default function CalculatorDashboard() {
                 </div>
 
                 {/* 2. Medium Cost Provider Card (MID) */}
-                <div className="bg-gradient-to-br from-indigo-950/20 to-slate-900/50 backdrop-blur-md border border-indigo-500/15 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-indigo-500/35 transition-all duration-300">
+                <div className="bg-gradient-to-br from-indigo-950/20 to-slate-900/50 backdrop-blur-md border border-indigo-500/15 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-indigo-500/35 transition-all duration-300 print-summary-card">
                   <div className="absolute top-3 right-3 text-indigo-400/20 font-extrabold text-3xl font-mono">MID</div>
                   <span className="text-indigo-400 text-xs font-bold uppercase tracking-wider">중간 월비용 (혼합)</span>
                   <h3 className="text-xl font-bold text-white mt-1">{midProv.provider}</h3>
@@ -1610,7 +1635,7 @@ export default function CalculatorDashboard() {
                 </div>
 
                 {/* 3. Most Expensive Provider Card (MAX) */}
-                <div className="bg-gradient-to-br from-rose-950/10 to-slate-900/50 backdrop-blur-md border border-rose-500/15 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-rose-500/35 transition-all duration-300">
+                <div className="bg-gradient-to-br from-rose-950/10 to-slate-900/50 backdrop-blur-md border border-rose-500/15 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-rose-500/35 transition-all duration-300 print-summary-card">
                   <div className="absolute top-3 right-3 text-rose-500/15 font-extrabold text-3xl font-mono">MAX</div>
                   <span className="text-rose-400 text-xs font-bold uppercase tracking-wider">최대 월비용 (혼합)</span>
                   <h3 className="text-xl font-bold text-white mt-1">{maxProv.provider}</h3>
