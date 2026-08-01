@@ -1587,7 +1587,7 @@ export default function CalculatorDashboard() {
                     <th className="py-2 px-3">모델명</th>
                     <th className="py-2 px-3 text-center">컨텍스트</th>
                     <th className="py-2 px-3 text-center">출력 한도</th>
-                    <th className="py-2 px-3 text-center text-violet-300 font-bold">Vals Index</th>
+                    <th className="py-2 px-3 text-center text-violet-300 font-bold">MMLU-Pro</th>
                     <th className="py-2 px-3 text-center text-cyan-300 font-bold">SWE-bench Pro</th>
                     <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
                   </tr>
@@ -1597,8 +1597,8 @@ export default function CalculatorDashboard() {
                     .filter(m => m.tier === 'high')
                     .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                     .map((model, index) => {
-                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-', sweBench: '-' };
-                      return (
+                       const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-', sweBench: '-' };
+                       return (
                         <tr key={index} className="hover:bg-slate-800/10 transition-colors">
                           <td className="py-2.5 px-3 font-bold">
                             <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] ${getProviderBgColor(model.provider)}`}>
@@ -1657,7 +1657,7 @@ export default function CalculatorDashboard() {
                     <th className="py-2 px-3">모델명</th>
                     <th className="py-2 px-3 text-center">컨텍스트</th>
                     <th className="py-2 px-3 text-center">출력 한도</th>
-                    <th className="py-2 px-3 text-center text-emerald-300 font-bold">Vals Index</th>
+                    <th className="py-2 px-3 text-center text-emerald-300 font-bold">MMLU-Pro</th>
                     <th className="py-2 px-3 text-center text-cyan-300 font-bold">SWE-bench Pro</th>
                     <th className="py-2 px-3 text-right">토큰 요금 (입/출)</th>
                   </tr>
@@ -1667,8 +1667,8 @@ export default function CalculatorDashboard() {
                     .filter(m => m.tier === 'mid')
                     .sort((a, b) => getValsIndexVal(b.modelName, performanceDb) - getValsIndexVal(a.modelName, performanceDb))
                     .map((model, index) => {
-                      const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-', sweBench: '-' };
-                      return (
+                       const spec = performanceDb[model.modelName] || { context: '-', maxOutput: '-', valsIndex: '-', sweBench: '-' };
+                       return (
                         <tr key={index} className="hover:bg-slate-800/10 transition-colors">
                           <td className="py-2.5 px-3 font-bold">
                             <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] ${getProviderBgColor(model.provider)}`}>
@@ -1707,14 +1707,22 @@ export default function CalculatorDashboard() {
           </div>
         </div>
 
-        {/* Vals Index Description Footer Note */}
+        {/* MMLU-Pro & SWE-bench Pro Description Footer Note */}
         <div className="col-span-1 lg:col-span-2 text-[10px] text-slate-400 bg-slate-950/40 border border-slate-800/80 p-3.5 rounded-xl leading-relaxed flex items-start gap-2.5 shadow-md">
           <Info className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
-          <div>
-            <span className="font-bold text-slate-200">Vals Index란?</span>
-            <p className="mt-1 text-slate-400">
-              Vals AI가 문서형 지식 작업, 코딩, 금융, 법률, 의료 등 여러 실무형 벤치마크를 묶어 산출하는 종합 성능 점수입니다. 위의 스펙 표들은 Vals Index 점수가 높은 순서대로 실시간 자동 배열됩니다.
-            </p>
+          <div className="space-y-2">
+            <div>
+              <span className="font-bold text-slate-200">MMLU-Pro 벤치마크란?</span>
+              <p className="mt-0.5 text-slate-400">
+                대학 학부생 수준의 다학제적 객관식 지식 평가(MMLU) 지표에 고난이도 추론, 다단계 수학적 문제 해결 능력을 결합하여 변별력을 극대화한 종합 인공지능 지능 평가 기준입니다. 위의 스펙 표들은 MMLU-Pro 득점 백분율(%) 지수가 높은 순서대로 실시간 자동 배열됩니다.
+              </p>
+            </div>
+            <div>
+              <span className="font-bold text-slate-200">SWE-bench Pro 벤치마크란?</span>
+              <p className="mt-0.5 text-slate-400">
+                실제 깃허브(GitHub) 소프트웨어 저장소의 복잡한 버그/기능 요구사항 이슈를 인공지능 에이전트가 직접 소스 코드 분석, 수정, 빌드하여 테스트 코드 통과 여부까지 완벽히 검증받는 수행 능력 평가지표입니다. 실무 코딩 에이전트 성능을 가늠하는 가장 가혹하고 변별력 높은 최고난도 벤치마크 기준입니다.
+              </p>
+            </div>
           </div>
         </div>
 

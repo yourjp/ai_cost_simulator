@@ -106,6 +106,7 @@ function parseData() {
             performanceData[modelName] = {
               context,
               maxOutput,
+              mmlu: valsIndex,
               valsIndex,
               sweBench,
               features
