@@ -1047,6 +1047,21 @@ export default function CalculatorDashboard() {
             border-right: none !important;
           }
 
+          /* AI 서비스 공급자 요금 최대 차이 카드를 조그마하고 정갈한 한 칸 독립 상자로 출력 */
+          .print-max-diff-card {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.75rem !important;
+            background-color: #f8fafc !important;
+            padding: 0.75rem 1rem !important;
+            margin-bottom: 1.5rem !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+          }
+
           /* Hide all control panels, preset bars, files uploader, headers, and footer */
           header,
           footer,
@@ -1653,7 +1668,7 @@ export default function CalculatorDashboard() {
                 </div>
 
                 {/* Cost Saving Metric Card (Full width inside its row) */}
-                <div className="md:col-span-3 bg-gradient-to-r from-indigo-950/20 via-slate-900/40 to-indigo-950/15 backdrop-blur-md border border-indigo-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-6 relative overflow-hidden">
+                <div className="md:col-span-3 bg-gradient-to-r from-indigo-950/20 via-slate-900/40 to-indigo-950/15 backdrop-blur-md border border-indigo-500/15 rounded-2xl p-5 shadow-xl flex items-center justify-between gap-6 relative overflow-hidden print-max-diff-card">
                   <div className="absolute -left-12 -bottom-12 w-28 h-28 bg-indigo-500/5 blur-2xl rounded-full"></div>
                   <div>
                     <span className="text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
