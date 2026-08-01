@@ -1133,7 +1133,7 @@ export default function CalculatorDashboard() {
       <main id="dashboard-capture-area" className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
         {/* Left Side: Inputs & UI-State-Agent Controls (5 cols) */}
-        <section className="lg:col-span-5 flex flex-col gap-6">
+        <section className="lg:col-span-5 flex flex-col gap-6 no-print">
           
           {/* Base Parameters Card */}
           <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl">
