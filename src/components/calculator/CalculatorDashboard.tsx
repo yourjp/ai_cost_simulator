@@ -792,12 +792,32 @@ export default function CalculatorDashboard() {
       setTimeout(() => {
         html2canvasLib(captureArea, {
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           scale: 2,
           backgroundColor: '#070a13',
           logging: true,
           ignoreElements: (element: HTMLElement) => {
             return element.tagName === 'BUTTON' || element.tagName === 'INPUT' || element.classList.contains('no-print');
+          },
+          onclone: (clonedDoc: Document) => {
+            // Purify SVG linearGradients and defs inside cloned DOM to completely bypass browser canvas tainting
+            const svgElements = clonedDoc.querySelectorAll('svg');
+            svgElements.forEach(svg => {
+              const defs = svg.querySelectorAll('defs');
+              defs.forEach(d => d.remove());
+
+              const paths = svg.querySelectorAll('path, rect, circle, line');
+              paths.forEach(p => {
+                const stroke = p.getAttribute('stroke');
+                const fill = p.getAttribute('fill');
+                if (stroke && stroke.includes('url(')) {
+                  p.setAttribute('stroke', '#4f46e5'); // Solid Indigo stroke fallback
+                }
+                if (fill && fill.includes('url(')) {
+                  p.setAttribute('fill', '#1e293b'); // Dark fill fallback
+                }
+              });
+            });
           }
         }).then((canvas: HTMLCanvasElement) => {
           const link = document.createElement('a');
