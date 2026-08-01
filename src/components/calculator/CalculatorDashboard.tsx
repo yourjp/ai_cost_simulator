@@ -788,19 +788,24 @@ export default function CalculatorDashboard() {
     }
 
     const runCapture = (html2canvasLib: any) => {
-      // Defer rendering with a short timeout to prevent browser UI thread blockages
       setTimeout(() => {
+        // Stage 1: Standard high-res rendering with CORS & SVG taint handling
         html2canvasLib(captureArea, {
           useCORS: true,
           allowTaint: false,
-          scale: 2,
+          scale: 1.5,
           backgroundColor: '#070a13',
-          logging: true,
+          logging: false,
           ignoreElements: (element: HTMLElement) => {
-            return element.tagName === 'BUTTON' || element.tagName === 'INPUT' || element.classList.contains('no-print');
+            return (
+              element.tagName === 'BUTTON' ||
+              element.tagName === 'INPUT' ||
+              element.classList.contains('no-print') ||
+              element.classList.contains('animate-pulse') ||
+              element.classList.contains('animate-spin')
+            );
           },
           onclone: (clonedDoc: Document) => {
-            // Purify SVG linearGradients and defs inside cloned DOM to completely bypass browser canvas tainting
             const svgElements = clonedDoc.querySelectorAll('svg');
             svgElements.forEach(svg => {
               const defs = svg.querySelectorAll('defs');
@@ -811,10 +816,10 @@ export default function CalculatorDashboard() {
                 const stroke = p.getAttribute('stroke');
                 const fill = p.getAttribute('fill');
                 if (stroke && stroke.includes('url(')) {
-                  p.setAttribute('stroke', '#4f46e5'); // Solid Indigo stroke fallback
+                  p.setAttribute('stroke', '#6366f1');
                 }
                 if (fill && fill.includes('url(')) {
-                  p.setAttribute('fill', '#1e293b'); // Dark fill fallback
+                  p.setAttribute('fill', '#1e293b');
                 }
               });
             });
@@ -826,14 +831,34 @@ export default function CalculatorDashboard() {
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
-        }).catch((err: any) => {
-          console.error('Capture failed', err);
-          alert('❌ 이미지 스냅샷 생성에 실패했습니다. (CORS 보안 규정 또는 SVG 필터 그리기 거부 발생)');
+        }).catch((err1: any) => {
+          console.warn('Stage 1 capture failed, running Stage 2 fallback without complex SVGs:', err1);
+          
+          // Stage 2 Fallback: Purify all SVGs and render result cards securely
+          html2canvasLib(captureArea, {
+            useCORS: false,
+            allowTaint: true,
+            scale: 1,
+            backgroundColor: '#070a13',
+            logging: false,
+            onclone: (clonedDoc: Document) => {
+              const svgs = clonedDoc.querySelectorAll('svg');
+              svgs.forEach(s => s.remove()); // Remove SVGs to avoid any browser canvas tainting
+            }
+          }).then((canvas: HTMLCanvasElement) => {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = `AI_Cost_Simulator_Result_${new Date().toISOString().slice(0, 10)}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }).catch((err2: any) => {
+            console.error('Stage 2 fallback failed', err2);
+            alert('💡 보안 정책으로 인해 이미지 스냅샷 생성이 거부되었습니다. [📄 PDF 인쇄/저장] 버튼을 누르면 고화질 리포트로 저장할 수 있습니다!');
+          });
         });
-      }, 300);
+      }, 200);
     };
-
-    alert('📸 결과 화면 스냅샷을 생성 중입니다. 확인을 누르시면 잠시 후 다운로드됩니다.');
 
     const globalHtml2canvas = (window as any).html2canvas;
     if (globalHtml2canvas) {
@@ -847,11 +872,11 @@ export default function CalculatorDashboard() {
         if (loadedLib) {
           runCapture(loadedLib);
         } else {
-          alert('❌ 스냅샷 라이브러리(html2canvas) 로드 실패.');
+          alert('❌ html2canvas 라이브러리 로드 실패. [📄 PDF 인쇄/저장]을 대신 이용해 주세요.');
         }
       };
       script.onerror = () => {
-        alert('❌ 스냅샷 라이브러리 스크립트 로드에 실패했습니다.');
+        alert('❌ CDN 스크립트 접근 차단. [📄 PDF 인쇄/저장]을 대신 이용해 주세요.');
       };
       document.head.appendChild(script);
     }
