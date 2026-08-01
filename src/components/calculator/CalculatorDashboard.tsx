@@ -200,7 +200,7 @@ export default function CalculatorDashboard() {
     },
     {
       name: '최소 비용 절약 (Cost-saving)',
-      totalUsers: 2000,
+      totalUsers: 1000,
       exchangeRate: 1500,
       currencyMode: 'KRW',
       ratios: { light: 60, heavy: 25, stdDev: 10, heavyDev: 5 },
