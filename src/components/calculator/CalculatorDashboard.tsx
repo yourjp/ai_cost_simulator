@@ -780,6 +780,56 @@ export default function CalculatorDashboard() {
     document.body.removeChild(link);
   };
 
+  const handleCapturePng = () => {
+    const captureArea = document.getElementById('dashboard-capture-area');
+    if (!captureArea) return;
+
+    const runCapture = (html2canvasLib: any) => {
+      alert('📸 대시보드 스냅샷을 생성 중입니다. 잠시만 기다려 주세요...');
+      html2canvasLib(captureArea, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: '#070a13',
+        logging: false
+      }).then((canvas: HTMLCanvasElement) => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = `AI_Cost_Simulator_Snapshot_${new Date().toISOString().slice(0, 10)}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }).catch((err: any) => {
+        console.error('Capture failed', err);
+        alert('❌ 스냅샷 캡처 중 오류가 발생했습니다.');
+      });
+    };
+
+    const globalHtml2canvas = (window as any).html2canvas;
+    if (globalHtml2canvas) {
+      runCapture(globalHtml2canvas);
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.async = true;
+      script.onload = () => {
+        const loadedLib = (window as any).html2canvas;
+        if (loadedLib) {
+          runCapture(loadedLib);
+        } else {
+          alert('❌ 스냅샷 라이브러리(html2canvas) 로드 실패.');
+        }
+      };
+      script.onerror = () => {
+        alert('❌ 스냅샷 라이브러리 로딩 중 오류가 발생했습니다.');
+      };
+      document.head.appendChild(script);
+    }
+  };
+
+  const handlePrintPdf = () => {
+    window.print();
+  };
+
   // Formatting helpers
   const formatNumber = (num: number, maxDecimals: number = 0) => {
     return new Intl.NumberFormat('ko-KR', { maximumFractionDigits: maxDecimals }).format(num);
@@ -900,6 +950,66 @@ export default function CalculatorDashboard() {
 
   return (
     <div className="min-h-screen bg-[#070a13] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-950/20 via-[#070a13] to-[#070a13] text-slate-100 p-6 md:p-10 font-sans">
+      <style>{`
+        @media print {
+          /* Hide all control panels, preset bars, files uploader, headers, and footer */
+          header,
+          footer,
+          .no-print,
+          section.mb-8, /* preset quickbar */
+          button,
+          input,
+          select,
+          .hidden,
+          .flex.items-center.gap-2.text-\\[10px\\], /* version tags */
+          div.mb-6.flex.flex-wrap { /* inline configuration selectors */
+            display: none !important;
+          }
+
+          /* Force A4 print layout to fit print width with high legibility */
+          #dashboard-capture-area {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+
+          /* Invert card borders and slate dark colors to white paper formats */
+          .bg-slate-900\\/40,
+          .bg-slate-900\\/30,
+          .bg-slate-950\\/40,
+          .bg-slate-950\\/20 {
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+          }
+
+          .text-slate-100,
+          .text-slate-200,
+          .text-slate-300,
+          .text-white {
+            color: #0f172a !important;
+          }
+
+          .text-slate-400,
+          .text-slate-500 {
+            color: #475569 !important;
+          }
+          
+          /* Keep visual borders visible on tables during PDF generation */
+          table, th, td {
+            border-color: #e2e8f0 !important;
+            color: #0f172a !important;
+          }
+        }
+      `}</style>
       
       {/* 1. Header Area */}
       <header className="max-w-7xl mx-auto mb-10 text-center md:text-left flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-800/60 pb-8">
@@ -990,7 +1100,7 @@ export default function CalculatorDashboard() {
           )}
         </div>
 
-        <div className="flex items-center gap-2.5 ml-auto">
+        <div className="flex flex-wrap items-center gap-2.5 ml-auto">
           <button
             onClick={handleSavePreset}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white rounded-lg text-xs font-bold transition-all duration-200 shadow"
@@ -1000,15 +1110,27 @@ export default function CalculatorDashboard() {
           </button>
           <button
             onClick={handleExportReport}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:from-emerald-700 active:to-teal-700 text-white rounded-lg text-xs font-extrabold transition-all duration-200 shadow-md"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white rounded-lg text-xs font-bold transition-all duration-200 shadow"
           >
             <span>리포트 내보내기 (.md)</span>
+          </button>
+          <button
+            onClick={handleCapturePng}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white rounded-lg text-xs font-bold transition-all duration-200 shadow"
+          >
+            <span>📸 PNG 스냅샷</span>
+          </button>
+          <button
+            onClick={handlePrintPdf}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 active:from-indigo-700 active:to-violet-700 text-white rounded-lg text-xs font-extrabold transition-all duration-200 shadow-md"
+          >
+            <span>📄 PDF 인쇄/저장</span>
           </button>
         </div>
       </section>
 
       {/* Main Layout Grid */}
-      <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main id="dashboard-capture-area" className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
         {/* Left Side: Inputs & UI-State-Agent Controls (5 cols) */}
         <section className="lg:col-span-5 flex flex-col gap-6">
