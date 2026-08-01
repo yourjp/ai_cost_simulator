@@ -1047,19 +1047,9 @@ export default function CalculatorDashboard() {
             border-right: none !important;
           }
 
-          /* AI 서비스 공급자 요금 최대 차이 카드를 조그마하고 정갈한 한 칸 독립 상자로 출력 */
+          /* AI 서비스 공급자 요금 최대 차이 카드는 PDF 인쇄/출력 시 완전히 숨김 */
           .print-max-diff-card {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 0.75rem !important;
-            background-color: #f8fafc !important;
-            padding: 0.75rem 1rem !important;
-            margin-bottom: 1.5rem !important;
-            color: #0f172a !important;
-            box-shadow: none !important;
+            display: none !important;
           }
 
           /* Hide all control panels, preset bars, files uploader, headers, and footer */
