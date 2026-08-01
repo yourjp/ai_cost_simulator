@@ -1007,7 +1007,21 @@ export default function CalculatorDashboard() {
   return (
     <div className="min-h-screen bg-[#070a13] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-950/20 via-[#070a13] to-[#070a13] text-slate-100 p-6 md:p-10 font-sans">
       <style>{`
+        .print-only {
+          display: none !important;
+        }
+
         @media print {
+          .print-only {
+            display: block !important;
+            margin-bottom: 1.5rem !important;
+            padding: 1rem !important;
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.75rem !important;
+            color: #0f172a !important;
+          }
+
           /* Hide all control panels, preset bars, files uploader, headers, and footer */
           header,
           footer,
@@ -1531,6 +1545,23 @@ export default function CalculatorDashboard() {
 
         {/* Right Side: Simulation Results & Visuals (7 cols) */}
         <section id="dashboard-result-area" className="lg:col-span-7 flex flex-col gap-6">
+
+          {/* 📄 인쇄 전용 시뮬레이션 기본 파라미터 요약 헤더 (화면에서는 숨김, PDF 인쇄 시에만 상단 노출!) */}
+          <div className="print-only mb-6 p-4 border border-slate-300 rounded-xl bg-slate-50 text-slate-900 text-xs">
+            <h3 className="font-extrabold text-sm mb-2 text-slate-900 border-b border-slate-300 pb-1.5 flex items-center justify-between">
+              <span>📋 AI 인프라 시뮬레이션 기본 파라미터 명세</span>
+              <span className="text-[10px] text-slate-500 font-normal">생성일시: {new Date().toLocaleDateString()}</span>
+            </h3>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 font-mono text-[11px]">
+              <div><span className="font-bold text-slate-700">총 운용 사용자:</span> {totalUsers.toLocaleString()} 명</div>
+              <div><span className="font-bold text-slate-700">적용 달러 환율:</span> ₩{exchangeRate.toLocaleString()} / USD ({currencyMode} 환산)</div>
+              <div><span className="font-bold text-slate-700">OpenAI 최상위 타겟:</span> {getSelectedModelName('OpenAI', 'high')}</div>
+              <div><span className="font-bold text-slate-700">Anthropic 최상위 타겟:</span> {getSelectedModelName('Anthropic', 'high')}</div>
+              <div className="col-span-2 pt-1.5 border-t border-slate-200 mt-1">
+                <span className="font-bold text-slate-700">유저 구성 비율:</span> 라이트 {ratios.light}% ({(Math.round(totalUsers * (ratios.light / 100))).toLocaleString()}명) | 헤비 {ratios.heavy}% ({(Math.round(totalUsers * (ratios.heavy / 100))).toLocaleString()}명) | 개발자 {ratios.stdDev}% ({(Math.round(totalUsers * (ratios.stdDev / 100))).toLocaleString()}명) | 헤비개발자 {ratios.heavyDev}% ({(Math.round(totalUsers * (ratios.heavyDev / 100))).toLocaleString()}명)
+              </div>
+            </div>
+          </div>
 
           {/* 2. Summary Dashboard Cards (Updated to Provider Blended Comparison) */}
           {summary && providerResults.length > 0 && (() => {
