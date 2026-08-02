@@ -14,15 +14,15 @@
       "modelName": "gpt-5.6-terra",
       "provider": "OpenAI",
       "tier": "high",
-      "inputCostPer1M": 2.5,
-      "outputCostPer1M": 15
+      "inputCostPer1M": 2,
+      "outputCostPer1M": 12
     },
     {
       "modelName": "gpt-5.6-luna",
       "provider": "OpenAI",
       "tier": "mid",
-      "inputCostPer1M": 1,
-      "outputCostPer1M": 6
+      "inputCostPer1M": 0.2,
+      "outputCostPer1M": 1.2
     },
     {
       "modelName": "gpt-5.4-nano",

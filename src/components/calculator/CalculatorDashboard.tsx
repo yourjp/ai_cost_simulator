@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import html2canvas from 'html2canvas';
 import { UIStateAgent, UserRatioState, UserType, ProviderMixState } from './UIStateAgent';
 import { PricingDataAgent, ModelPricing, FALLBACK_PRICING } from './PricingDataAgent';
 import { SimulationEngineAgent, DEFAULT_TOKEN_USAGE, UserTokenUsage } from './SimulationEngineAgent';
@@ -780,105 +781,198 @@ export default function CalculatorDashboard() {
     document.body.removeChild(link);
   };
 
-  const handleCapturePng = () => {
+  const downloadCanvasAsPng = async (canvas: HTMLCanvasElement) => {
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(blob => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('PNG 변환에 실패했습니다.'));
+        }
+      }, 'image/png');
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `AI_Cost_Simulator_Result_${new Date().toISOString().slice(0, 10)}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const prepareSnapshotClone = (clonedDoc: Document, stripSvg: boolean = false) => {
+    const clonedCaptureArea = clonedDoc.getElementById('dashboard-result-area');
+    if (!clonedCaptureArea) {
+      return;
+    }
+
+    clonedCaptureArea.querySelectorAll('input').forEach(input => {
+      const inputElement = input as HTMLInputElement;
+      if (inputElement.type === 'range') {
+        inputElement.remove();
+        return;
+      }
+
+      const value = inputElement.value || inputElement.getAttribute('value') || '';
+      const valueElement = clonedDoc.createElement('span');
+      valueElement.className = 'snapshot-input-value';
+      valueElement.textContent = value;
+      valueElement.style.setProperty('display', 'inline-flex', 'important');
+      valueElement.style.setProperty('align-items', 'center', 'important');
+      valueElement.style.setProperty('justify-content', inputElement.className.includes('text-right') ? 'flex-end' : 'flex-start', 'important');
+      valueElement.style.setProperty('box-sizing', 'border-box', 'important');
+      valueElement.style.setProperty('width', inputElement.className.includes('w-full') ? '100%' : 'auto', 'important');
+      valueElement.style.setProperty('min-width', inputElement.className.includes('w-24') ? '6rem' : '100%', 'important');
+      valueElement.style.setProperty('min-height', '2.15rem', 'important');
+      valueElement.style.setProperty('margin-top', '0.45rem', 'important');
+      valueElement.style.setProperty('padding', '0.35rem 0.65rem', 'important');
+      valueElement.style.setProperty('border', '1px solid #334155', 'important');
+      valueElement.style.setProperty('border-radius', '0.375rem', 'important');
+      valueElement.style.setProperty('background', 'rgba(2, 6, 23, 0.75)', 'important');
+      valueElement.style.setProperty('color', '#e2e8f0', 'important');
+      valueElement.style.setProperty('font-family', 'Consolas, monospace', 'important');
+      valueElement.style.setProperty('font-weight', '700', 'important');
+      valueElement.style.setProperty('font-size', '0.85rem', 'important');
+      inputElement.replaceWith(valueElement);
+    });
+
+    clonedCaptureArea.querySelectorAll('label').forEach(label => {
+      const labelElement = label as HTMLElement;
+      labelElement.style.setProperty('display', 'block', 'important');
+      labelElement.style.setProperty('margin-bottom', '0.35rem', 'important');
+      labelElement.style.setProperty('line-height', '1.15', 'important');
+      labelElement.style.setProperty('position', 'static', 'important');
+    });
+
+    clonedCaptureArea.querySelectorAll('.snapshot-only').forEach(element => {
+      const htmlElement = element as HTMLElement;
+      htmlElement.style.setProperty('display', 'block', 'important');
+    });
+
+    clonedCaptureArea.querySelectorAll('.no-snapshot').forEach(element => {
+      element.remove();
+    });
+
+    const getTextColor = (className: string) => {
+      if (className.includes('text-indigo') || className.includes('text-violet')) return '#a5b4fc';
+      if (className.includes('text-emerald')) return '#6ee7b7';
+      if (className.includes('text-amber')) return '#fbbf24';
+      if (className.includes('text-blue') || className.includes('text-cyan')) return '#7dd3fc';
+      if (className.includes('text-red')) return '#fca5a5';
+      if (className.includes('text-slate-500') || className.includes('text-slate-600')) return '#94a3b8';
+      if (className.includes('text-slate-400')) return '#cbd5e1';
+      return '#e2e8f0';
+    };
+
+    const getBackgroundColor = (className: string, tagName: string) => {
+      if (className.includes('bg-indigo') || className.includes('bg-violet')) return 'rgba(99, 102, 241, 0.16)';
+      if (className.includes('bg-emerald')) return 'rgba(16, 185, 129, 0.14)';
+      if (className.includes('bg-amber')) return 'rgba(245, 158, 11, 0.14)';
+      if (className.includes('bg-blue') || className.includes('bg-cyan')) return 'rgba(59, 130, 246, 0.14)';
+      if (className.includes('bg-slate-950')) return 'rgba(2, 6, 23, 0.72)';
+      if (className.includes('bg-slate-900')) return 'rgba(15, 23, 42, 0.76)';
+      if (tagName === 'TH') return 'rgba(15, 23, 42, 0.9)';
+      if (tagName === 'TD' || tagName === 'TR' || tagName === 'SPAN' || tagName === 'P') return 'transparent';
+      return 'rgba(15, 23, 42, 0.28)';
+    };
+
+    [clonedCaptureArea, ...Array.from(clonedCaptureArea.querySelectorAll('*'))].forEach(element => {
+      const htmlElement = element as HTMLElement;
+      if (htmlElement.classList.contains('snapshot-input-value')) {
+        return;
+      }
+      const className = typeof htmlElement.className === 'string' ? htmlElement.className : '';
+      const tagName = htmlElement.tagName;
+
+      htmlElement.style.setProperty('color', getTextColor(className), 'important');
+      htmlElement.style.setProperty('background-color', getBackgroundColor(className, tagName), 'important');
+      htmlElement.style.setProperty('background-image', 'none', 'important');
+      htmlElement.style.setProperty('border-color', '#334155', 'important');
+      htmlElement.style.setProperty('outline-color', '#334155', 'important');
+      htmlElement.style.setProperty('box-shadow', 'none', 'important');
+      htmlElement.style.setProperty('text-shadow', 'none', 'important');
+      htmlElement.style.setProperty('filter', 'none', 'important');
+      htmlElement.style.setProperty('backdrop-filter', 'none', 'important');
+    });
+
+    clonedCaptureArea.querySelectorAll('svg').forEach(svg => {
+      if (stripSvg) {
+        svg.remove();
+        return;
+      }
+
+      svg.querySelectorAll('defs').forEach(def => def.remove());
+      svg.querySelectorAll('path, rect, circle, line, polyline, polygon').forEach(shape => {
+        const stroke = shape.getAttribute('stroke');
+        const fill = shape.getAttribute('fill');
+        if (!stroke || stroke === 'currentColor' || stroke.includes('url(')) {
+          shape.setAttribute('stroke', '#818cf8');
+        }
+        if (fill?.includes('url(')) {
+          shape.setAttribute('fill', '#1e293b');
+        }
+      });
+    });
+  };
+
+  const handleCapturePng = async () => {
     const captureArea = document.getElementById('dashboard-result-area');
     if (!captureArea) {
       alert('❌ 캡처 대상 영역(dashboard-result-area)을 찾을 수 없습니다.');
       return;
     }
 
-    const runCapture = (html2canvasLib: any) => {
-      setTimeout(() => {
-        // Stage 1: Standard high-res rendering with CORS & SVG taint handling
-        html2canvasLib(captureArea, {
+    try {
+      const canvas = await html2canvas(captureArea, {
+        useCORS: true,
+        allowTaint: false,
+        scale: 2,
+        backgroundColor: '#070a13',
+        logging: false,
+        ignoreElements: (element: Element) => {
+          return (
+            element.tagName === 'BUTTON' ||
+            element.tagName === 'SVG' ||
+            element.classList.contains('no-print') ||
+            element.classList.contains('animate-pulse') ||
+            element.classList.contains('animate-spin')
+          );
+        },
+        onclone: (clonedDoc: Document) => prepareSnapshotClone(clonedDoc, true)
+      });
+
+      await downloadCanvasAsPng(canvas);
+    } catch (primaryError) {
+      console.warn('Primary snapshot capture failed, retrying without SVG elements:', primaryError);
+
+      try {
+        const canvas = await html2canvas(captureArea, {
           useCORS: true,
           allowTaint: false,
           scale: 1.5,
           backgroundColor: '#070a13',
           logging: false,
-          ignoreElements: (element: HTMLElement) => {
+          ignoreElements: (element: Element) => {
             return (
               element.tagName === 'BUTTON' ||
-              element.tagName === 'INPUT' ||
+              element.tagName === 'IMG' ||
+              element.tagName === 'CANVAS' ||
+              element.tagName === 'VIDEO' ||
+              element.tagName === 'SVG' ||
               element.classList.contains('no-print') ||
               element.classList.contains('animate-pulse') ||
               element.classList.contains('animate-spin')
             );
           },
-          onclone: (clonedDoc: Document) => {
-            const svgElements = clonedDoc.querySelectorAll('svg');
-            svgElements.forEach(svg => {
-              const defs = svg.querySelectorAll('defs');
-              defs.forEach(d => d.remove());
-
-              const paths = svg.querySelectorAll('path, rect, circle, line');
-              paths.forEach(p => {
-                const stroke = p.getAttribute('stroke');
-                const fill = p.getAttribute('fill');
-                if (stroke && stroke.includes('url(')) {
-                  p.setAttribute('stroke', '#6366f1');
-                }
-                if (fill && fill.includes('url(')) {
-                  p.setAttribute('fill', '#1e293b');
-                }
-              });
-            });
-          }
-        }).then((canvas: HTMLCanvasElement) => {
-          const link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
-          link.download = `AI_Cost_Simulator_Result_${new Date().toISOString().slice(0, 10)}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }).catch((err1: any) => {
-          console.warn('Stage 1 capture failed, running Stage 2 fallback without complex SVGs:', err1);
-          
-          // Stage 2 Fallback: Purify all SVGs and render result cards securely
-          html2canvasLib(captureArea, {
-            useCORS: false,
-            allowTaint: true,
-            scale: 1,
-            backgroundColor: '#070a13',
-            logging: false,
-            onclone: (clonedDoc: Document) => {
-              const svgs = clonedDoc.querySelectorAll('svg');
-              svgs.forEach(s => s.remove()); // Remove SVGs to avoid any browser canvas tainting
-            }
-          }).then((canvas: HTMLCanvasElement) => {
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = `AI_Cost_Simulator_Result_${new Date().toISOString().slice(0, 10)}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }).catch((err2: any) => {
-            console.error('Stage 2 fallback failed', err2);
-            alert('💡 보안 정책으로 인해 이미지 스냅샷 생성이 거부되었습니다. [📄 PDF 인쇄/저장] 버튼을 누르면 고화질 리포트로 저장할 수 있습니다!');
-          });
+          onclone: (clonedDoc: Document) => prepareSnapshotClone(clonedDoc, true)
         });
-      }, 200);
-    };
 
-    const globalHtml2canvas = (window as any).html2canvas;
-    if (globalHtml2canvas) {
-      runCapture(globalHtml2canvas);
-    } else {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      script.async = true;
-      script.onload = () => {
-        const loadedLib = (window as any).html2canvas;
-        if (loadedLib) {
-          runCapture(loadedLib);
-        } else {
-          alert('❌ html2canvas 라이브러리 로드 실패. [📄 PDF 인쇄/저장]을 대신 이용해 주세요.');
-        }
-      };
-      script.onerror = () => {
-        alert('❌ CDN 스크립트 접근 차단. [📄 PDF 인쇄/저장]을 대신 이용해 주세요.');
-      };
-      document.head.appendChild(script);
+        await downloadCanvasAsPng(canvas);
+      } catch (fallbackError) {
+        console.error('Snapshot capture failed:', fallbackError);
+        alert('💡 이미지 스냅샷 생성 중 오류가 발생했습니다. [📄 PDF 인쇄/저장] 버튼을 이용해 리포트로 저장하실 수도 있습니다.');
+      }
     }
   };
 
@@ -1732,7 +1826,7 @@ export default function CalculatorDashboard() {
             </div>
 
             {/* Recharts Bar Chart */}
-            <div className="h-72 w-full mt-4">
+            <div className="h-72 w-full mt-4 no-snapshot">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={chartData}
@@ -1777,9 +1871,35 @@ export default function CalculatorDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
+            <div className="snapshot-only hidden mt-4 h-72 w-full rounded-xl border border-slate-800/50 bg-slate-950/20 px-6 py-5">
+              <div className="flex h-full items-end justify-center gap-10 border-b border-slate-700/70 pb-8">
+                {chartData.map((entry) => {
+                  const maxCost = Math.max(...chartData.map(item => item.cost), 1);
+                  const barHeight = Math.max(12, Math.round((entry.cost / maxCost) * 190));
+                  return (
+                    <div key={`snapshot-${entry.name}`} className="flex h-full w-28 flex-col items-center justify-end gap-2">
+                      <div className="font-mono text-xs font-extrabold text-slate-200">
+                        {currencyMode === 'USD' ? `$${formatNumber(entry.cost, 0)}` : `₩${formatNumber(entry.cost)}`}
+                      </div>
+                      <div
+                        className="w-12 rounded-t-lg"
+                        style={{
+                          height: `${barHeight}px`,
+                          backgroundColor: getProviderColor(entry.provider),
+                        }}
+                      />
+                      <div className="max-w-28 text-center text-xs font-bold text-slate-300">
+                        {entry.name}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             
             {/* Chart Legend */}
-            <div className="flex flex-wrap justify-center gap-6 mt-3 border-t border-slate-800/50 pt-4 text-xs text-slate-400">
+            <div className="flex flex-wrap justify-center gap-6 mt-3 border-t border-slate-800/50 pt-4 text-xs text-slate-400 no-snapshot">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-[#4285f4]"></span>
                 <span>Google</span>
