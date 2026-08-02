@@ -58,7 +58,7 @@ const PROVIDER_NEWS_EVENTS: NewsEventsByProvider = (dynamicData.newsData as News
 
 const TREND_DATA = (dynamicData.trendData as { high?: TrendPoint[]; mid?: TrendPoint[] }) || {};
 const DATA_METADATA = (dynamicData.metadata as Metadata) || {};
-const APP_UPDATED_AT = '2026.07.31';
+const APP_UPDATED_AT = '2026.08.02';
 const MODEL_LAUNCH_DATES: Record<string, string> = {
   'gpt-5.6-sol': '2026-06-26',
   'gpt-5.6-terra': '2026-06-26',
@@ -806,6 +806,9 @@ export default function CalculatorDashboard() {
     if (!clonedCaptureArea) {
       return;
     }
+    clonedCaptureArea.style.setProperty('background', '#ffffff', 'important');
+    clonedCaptureArea.style.setProperty('color', '#0f172a', 'important');
+    clonedCaptureArea.style.setProperty('padding', '1.25rem', 'important');
 
     clonedCaptureArea.querySelectorAll('input').forEach(input => {
       const inputElement = input as HTMLInputElement;
@@ -827,10 +830,10 @@ export default function CalculatorDashboard() {
       valueElement.style.setProperty('min-height', '2.15rem', 'important');
       valueElement.style.setProperty('margin-top', '0.45rem', 'important');
       valueElement.style.setProperty('padding', '0.35rem 0.65rem', 'important');
-      valueElement.style.setProperty('border', '1px solid #334155', 'important');
+      valueElement.style.setProperty('border', '1px solid #cbd5e1', 'important');
       valueElement.style.setProperty('border-radius', '0.375rem', 'important');
-      valueElement.style.setProperty('background', 'rgba(2, 6, 23, 0.75)', 'important');
-      valueElement.style.setProperty('color', '#e2e8f0', 'important');
+      valueElement.style.setProperty('background', '#ffffff', 'important');
+      valueElement.style.setProperty('color', '#0f172a', 'important');
       valueElement.style.setProperty('font-family', 'Consolas, monospace', 'important');
       valueElement.style.setProperty('font-weight', '700', 'important');
       valueElement.style.setProperty('font-size', '0.85rem', 'important');
@@ -855,31 +858,30 @@ export default function CalculatorDashboard() {
     });
 
     const getTextColor = (className: string) => {
-      if (className.includes('text-indigo') || className.includes('text-violet')) return '#a5b4fc';
-      if (className.includes('text-emerald')) return '#6ee7b7';
-      if (className.includes('text-amber')) return '#fbbf24';
-      if (className.includes('text-blue') || className.includes('text-cyan')) return '#7dd3fc';
-      if (className.includes('text-red')) return '#fca5a5';
-      if (className.includes('text-slate-500') || className.includes('text-slate-600')) return '#94a3b8';
-      if (className.includes('text-slate-400')) return '#cbd5e1';
-      return '#e2e8f0';
+      if (className.includes('text-indigo') || className.includes('text-violet')) return '#4f46e5';
+      if (className.includes('text-emerald')) return '#047857';
+      if (className.includes('text-amber')) return '#b45309';
+      if (className.includes('text-blue') || className.includes('text-cyan')) return '#0369a1';
+      if (className.includes('text-red') || className.includes('text-rose')) return '#be123c';
+      if (className.includes('text-slate-500') || className.includes('text-slate-600')) return '#475569';
+      if (className.includes('text-slate-400')) return '#64748b';
+      return '#0f172a';
     };
 
     const getBackgroundColor = (className: string, tagName: string) => {
-      if (className.includes('bg-indigo') || className.includes('bg-violet')) return 'rgba(99, 102, 241, 0.16)';
-      if (className.includes('bg-emerald')) return 'rgba(16, 185, 129, 0.14)';
-      if (className.includes('bg-amber')) return 'rgba(245, 158, 11, 0.14)';
-      if (className.includes('bg-blue') || className.includes('bg-cyan')) return 'rgba(59, 130, 246, 0.14)';
-      if (className.includes('bg-slate-950')) return 'rgba(2, 6, 23, 0.72)';
-      if (className.includes('bg-slate-900')) return 'rgba(15, 23, 42, 0.76)';
-      if (tagName === 'TH') return 'rgba(15, 23, 42, 0.9)';
+      if (className.includes('bg-indigo') || className.includes('bg-violet')) return '#eef2ff';
+      if (className.includes('bg-emerald')) return '#ecfdf5';
+      if (className.includes('bg-amber')) return '#fffbeb';
+      if (className.includes('bg-blue') || className.includes('bg-cyan')) return '#eff6ff';
+      if (className.includes('bg-slate-950') || className.includes('bg-slate-900')) return '#ffffff';
+      if (tagName === 'TH') return '#f8fafc';
       if (tagName === 'TD' || tagName === 'TR' || tagName === 'SPAN' || tagName === 'P') return 'transparent';
-      return 'rgba(15, 23, 42, 0.28)';
+      return '#ffffff';
     };
 
     [clonedCaptureArea, ...Array.from(clonedCaptureArea.querySelectorAll('*'))].forEach(element => {
       const htmlElement = element as HTMLElement;
-      if (htmlElement.classList.contains('snapshot-input-value')) {
+      if (htmlElement.classList.contains('snapshot-input-value') || htmlElement.classList.contains('snapshot-chart-bar')) {
         return;
       }
       const className = typeof htmlElement.className === 'string' ? htmlElement.className : '';
@@ -888,8 +890,8 @@ export default function CalculatorDashboard() {
       htmlElement.style.setProperty('color', getTextColor(className), 'important');
       htmlElement.style.setProperty('background-color', getBackgroundColor(className, tagName), 'important');
       htmlElement.style.setProperty('background-image', 'none', 'important');
-      htmlElement.style.setProperty('border-color', '#334155', 'important');
-      htmlElement.style.setProperty('outline-color', '#334155', 'important');
+      htmlElement.style.setProperty('border-color', '#cbd5e1', 'important');
+      htmlElement.style.setProperty('outline-color', '#cbd5e1', 'important');
       htmlElement.style.setProperty('box-shadow', 'none', 'important');
       htmlElement.style.setProperty('text-shadow', 'none', 'important');
       htmlElement.style.setProperty('filter', 'none', 'important');
@@ -907,10 +909,10 @@ export default function CalculatorDashboard() {
         const stroke = shape.getAttribute('stroke');
         const fill = shape.getAttribute('fill');
         if (!stroke || stroke === 'currentColor' || stroke.includes('url(')) {
-          shape.setAttribute('stroke', '#818cf8');
+          shape.setAttribute('stroke', '#4f46e5');
         }
         if (fill?.includes('url(')) {
-          shape.setAttribute('fill', '#1e293b');
+          shape.setAttribute('fill', '#e2e8f0');
         }
       });
     });
@@ -928,7 +930,7 @@ export default function CalculatorDashboard() {
         useCORS: true,
         allowTaint: false,
         scale: 2,
-        backgroundColor: '#070a13',
+        backgroundColor: '#ffffff',
         logging: false,
         ignoreElements: (element: Element) => {
           return (
@@ -951,7 +953,7 @@ export default function CalculatorDashboard() {
           useCORS: true,
           allowTaint: false,
           scale: 1.5,
-          backgroundColor: '#070a13',
+          backgroundColor: '#ffffff',
           logging: false,
           ignoreElements: (element: Element) => {
             return (
@@ -1106,6 +1108,11 @@ export default function CalculatorDashboard() {
         }
 
         @media print {
+          @page {
+            size: A4;
+            margin: 12mm;
+          }
+
           .print-only {
             display: block !important;
             margin-bottom: 1.5rem !important;
@@ -1201,6 +1208,33 @@ export default function CalculatorDashboard() {
           table, th, td {
             border-color: #e2e8f0 !important;
             color: #0f172a !important;
+          }
+
+          #dashboard-result-area > section,
+          #dashboard-result-area > div,
+          #dashboard-result-area article,
+          #dashboard-result-area table,
+          .print-only,
+          .print-summary-grid,
+          .print-summary-card {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+          }
+
+          #dashboard-result-area > section,
+          #dashboard-result-area > div {
+            break-before: auto !important;
+            page-break-before: auto !important;
+          }
+
+          #dashboard-result-area > section + section,
+          #dashboard-result-area > div + div {
+            margin-top: 1rem !important;
+          }
+
+          #dashboard-result-area .overflow-x-auto,
+          #dashboard-result-area .overflow-hidden {
+            overflow: visible !important;
           }
         }
       `}</style>
@@ -1883,7 +1917,7 @@ export default function CalculatorDashboard() {
                         {currencyMode === 'USD' ? `$${formatNumber(entry.cost, 0)}` : `₩${formatNumber(entry.cost)}`}
                       </div>
                       <div
-                        className="w-12 rounded-t-lg"
+                        className="w-12 rounded-t-lg snapshot-chart-bar"
                         style={{
                           height: `${barHeight}px`,
                           backgroundColor: getProviderColor(entry.provider),
